@@ -147,4 +147,4 @@ if all(file_dict.values()):
 
 # **Botón para limpiar la app**
 if st.button("Limpiar"):
-    st.experimental_rerun()
+    st.rerun()
