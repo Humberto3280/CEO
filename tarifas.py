@@ -128,7 +128,6 @@ columns_to_select = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 'NIVEL 
 Tarifas = tc1_filtrado[columns_to_select]
 Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
 
-Tarifas.info()
 
 """# Ahora se le tienen que hacer algunas modificaciones en este caso:
 
@@ -146,8 +145,6 @@ Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
 #Modificar valores de "CARGA DE INVERSION"
 Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101:0})
 
-Tarifas.head()
-
 """# Ahora se traen los nombre de los municipios según correspondan al código DAVIPOLA"""
 
 # Realiza la combinación de los DataFrames
@@ -159,8 +156,6 @@ Tarifas1 = Tarifas1.rename(columns={'Nombre Municipio ': 'Municipio'})
 
 # Elimina la columna 'Código DIVIPOLA' si no es necesaria
 Tarifas1 = Tarifas1.drop(columns=['Código DIVIPOLA'])
-
-Tarifas1.head()
 
 """# Se verifica que los NIU que estan duplicados cuenten con el mismo tipo de tarifa"""
 
@@ -220,15 +215,8 @@ tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'Tipo de Tarifa
 Tarifas2 = Tarifas1.merge(tblDinamicaTc2[['NIU', 'Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario', 'Tipo de Tarifa']],
                           on='NIU', how='left')
 
-# Filtrar el DataFrame `tc2` por NIU
-filtrado = tc2_sin_duplicados[tc2_sin_duplicados['NIU'] == '225361559']
-filtrado.head()
-
 # Modificar valores en 'Tipo_tarifa'
 Tarifas2['Tipo de Tarifa'] = Tarifas2['Tipo de Tarifa'].replace({1: 'R', 2: 'NR'})
-
-# Mostrar el DataFrame resultante
-Tarifas2.info()
 
 """# Ahora se organizan las columnas en el orden que se debe presentar:
 
@@ -260,8 +248,6 @@ Tarifas3 = Tarifas3.rename(columns={
     'DIVIPOLA': 'DAVIPOLA'
 })
 
-Tarifas3.head()
-
 """# Añadir el Cliente de otro mercado"""
 
 # Filtrar el DataFrame `tc2` por NIU
@@ -289,8 +275,6 @@ nueva_fila = pd.DataFrame({
 # Añadir esta fila al DataFrame Tarifas3
 Tarifas3 = pd.concat([Tarifas3, nueva_fila], ignore_index=True)
 
-Tarifas3.info()
-
 """# Se eliminan los NIU = CALP"""
 
 # Convertir la columna NIU a tipo string y reemplazar NaN con una cadena vacía
@@ -298,8 +282,6 @@ Tarifas3['NIU'] = Tarifas3['NIU'].astype(str).fillna('')
 
 # Filtrar el DataFrame para eliminar filas donde NIU contiene 'CAL'
 Tarifas_sin_cal = Tarifas3[~Tarifas3['NIU'].str.contains('CAL')]
-
-Tarifas_sin_cal.info()
 
 """# Se trae del archivo AP entregado por Hector al archivo de tarifas:
 
@@ -333,38 +315,19 @@ Tarifas4 = Tarifas_sin_cal.merge(
     how='left'
 )
 
-# Filtrar archivo_ap por estrato='AP'
-TarifasFiltrado = Tarifas4[Tarifas4['NIU'] == '225309471']
-TarifasFiltrado.head()
-
 # Actualizar las columnas CONSUMO, FACTURACION CONSUMO y TIPO TARIFA solo si los valores son mayores a cero
 Tarifas4.loc[Tarifas4['Suma de consumo'] > 0, 'CONSUMO'] = Tarifas4['Suma de consumo']
 Tarifas4.loc[(Tarifas4['Suma de facturacion consumo'].notna()) & (Tarifas4['Suma de facturacion consumo'] != 0), 'FACTURACION CONSUMO'] = Tarifas4['Suma de facturacion consumo']
 Tarifas4.loc[Tarifas4['tipo de tarifa'].notna(), 'TIPO TARIFA'] = Tarifas4['tipo de tarifa']
 
-# Filtrar archivo_ap por estrato='AP'
-TarifasFiltrado = Tarifas4[Tarifas4['NIU'] == '225309471']
-TarifasFiltrado.head()
-
 # Eliminar las columnas adicionales si no son necesarias
 Tarifas4 = Tarifas4.drop(columns=['producto', 'Suma de consumo', 'Suma de facturacion consumo', 'tipo de tarifa'])
-
-# Verificar el resultado
-Tarifas4.head()
 
 import numpy as np
 
 # Redondeo personalizado
 Tarifas4['CONSUMO'] = np.floor(Tarifas4['CONSUMO'] + 0.5).astype(int)
 Tarifas4['FACTURACION CONSUMO'] = np.floor(Tarifas4['FACTURACION CONSUMO'] + 0.5).astype(int)
-
-print(Tarifas4.head())
-
-TarifasFiltrado = Tarifas4[Tarifas4['NIU'] == '225663404']
-TarifasFiltrado.head()
-
-TarifasFiltrado = Tarifas4[Tarifas4['ESTRATO'] == 'AP']
-TarifasFiltrado.head()
 
 """# Validación de archivo tarifas"""
 
@@ -431,8 +394,6 @@ Tarifas4.info()
 # Filtrar DaNE por Ubicacion='U' y Municipio='Popayán'
 informeDane = Tarifas4[(Tarifas4['UBICACION'] == 'U') & (Tarifas4['MUNICIPIO'] == 'POPAYAN')]
 informeDane.head()
-
-informeDane.info()
 
 # Crear la tabla dinámica
 pivot_table = informeDane.pivot_table(
