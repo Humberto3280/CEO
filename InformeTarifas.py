@@ -1,36 +1,41 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
-def extraer_datos_excel(archivo_entrada, hoja_origen):
-    df = pd.read_excel(archivo_entrada, sheet_name=hoja_origen, header=3)
-    df = df[~df.iloc[:, 0].astype(str).str.contains("Total general", na=False)]
-    return df
+st.title("Carga y procesamiento de archivos")
 
-st.title("Carga de archivos para procesamiento")
+# Subir archivos
+uploaded_tc1 = st.file_uploader("Subir TC1.csv", type=["csv"])
+uploaded_tc2 = st.file_uploader("Subir TC2.xlsx", type=["xlsx"])
+uploaded_ap = st.file_uploader("Subir AP.xlsx", type=["xlsx"])
+uploaded_divipola = st.file_uploader("Subir Dane_Divipola_08_2012.xlsx", type=["xlsx"])
+uploaded_bitacora = st.file_uploader("Subir Bitacora.xlsx", type=["xlsx"])
 
-# Subida de TC1.csv
-tc1_file = st.file_uploader("Subir TC1.csv", type=["csv"])
-if tc1_file is not None:
-    tc1 = pd.read_csv(tc1_file)
-
-# Subida de TC2.xlsx
-tc2_file = st.file_uploader("Subir TC2.xlsx", type=["xlsx"])
-if tc2_file is not None:
-    tc2 = pd.read_excel(tc2_file)
-
-# Subida de AP.xlsx
-ap_file = st.file_uploader("Subir AP.xlsx", type=["xlsx"])
-if ap_file is not None:
-    archivo_ap = extraer_datos_excel(ap_file, "TABLA TARIFAS")
-    st.write("Vista previa de AP:")
-    st.dataframe(archivo_ap.head())
-
-# Subida de Dane_Divipola_08_2012.xlsx
-divipola_file = st.file_uploader("Subir Dane_Divipola_08_2012.xlsx", type=["xlsx"])
-if divipola_file is not None:
-    divipola = pd.read_excel(divipola_file)
-
-# Subida de Bitacora.xlsx
-bitacora_file = st.file_uploader("Subir Bitacora.xlsx", type=["xlsx"])
-if bitacora_file is not None:
-    bitacora = pd.read_excel(bitacora_file)
+if uploaded_tc1 and uploaded_tc2 and uploaded_ap and uploaded_divipola and uploaded_bitacora:
+    # Leer archivos
+    tc1 = pd.read_csv(uploaded_tc1)
+    tc2 = pd.read_excel(uploaded_tc2)
+    
+    def extraer_datos_excel(archivo_entrada, hoja_origen):
+        df = pd.read_excel(archivo_entrada, sheet_name=hoja_origen, header=3)
+        df = df[~df.iloc[:, 0].astype(str).str.contains("Total general", na=False)]
+        return df
+    
+    archivo_ap = extraer_datos_excel(uploaded_ap, "TABLA TARIFAS")
+    davipola = pd.read_excel(uploaded_divipola)
+    bitacora = pd.read_excel(uploaded_bitacora)
+    
+    # Mostrar nombres de columnas para verificación
+    st.write("### Columnas en TC1:", tc1.columns.tolist())
+    st.write("### Columnas en TC2:", tc2.columns.tolist())
+    st.write("### Columnas en AP:", archivo_ap.columns.tolist())
+    
+    # Aplicar filtro por ID_COMERCIALIZADOR = 23442 fuera del bloque de carga
+    id_comercializador_col = 'ID COMERCIALIZADOR'  # Ajustar si es necesario
+    niu_col = 'NIU'  # Ajustar si es necesario
+    
+    if id_comercializador_col in tc1.columns and niu_col in tc1.columns:
+        tc1_filtrado = tc1[tc1[id_comercializador_col] == 23442]
+        count_nius_tc1 = tc1_filtrado[niu_col].nunique()
+        st.write(f"Número de NIUs en TC1 después de filtrar: {count_nius_tc1}")
+    else:
+        st.error("Las columnas esperadas no están en TC1. Verifica los nombres de las columnas.")
