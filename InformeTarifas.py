@@ -3,7 +3,7 @@ import streamlit as st
 
 st.title("Informe tarifas")
 
-# Subir archivos
+# Subir archivos (un solo botón para todos)
 uploaded_files = st.file_uploader(
     "Subir archivos (TC1.csv, TC2.xlsx, AP.xlsx, Divipola.xlsx, Bitacora.xlsx)", 
     type=["csv", "xlsx"], 
@@ -26,6 +26,7 @@ for file in uploaded_files:
     elif "BITACORA" in file.name.upper():
         file_dict["BITACORA"] = file
 
+# Verificar si todos los archivos han sido cargados
 if all(file_dict.values()):
     try:
         # Leer archivos
@@ -36,74 +37,68 @@ if all(file_dict.values()):
         divipola = pd.read_excel(file_dict["DIVIPOLA"])
         bitacora = pd.read_excel(file_dict["BITACORA"])
 
-        # Filtro en TC1
-        if 'ID COMERCIALIZADOR' in tc1.columns and 'NIU' in tc1.columns:
-            tc1_filtrado = tc1[tc1['ID COMERCIALIZADOR'] == 23442]
-            count_nius_tc1 = tc1_filtrado['NIU'].nunique()
+        # Aplicar filtro en TC1
+        id_comercializador_col = 'ID COMERCIALIZADOR'
+        niu_col = 'NIU'
+
+        if id_comercializador_col in tc1.columns and niu_col in tc1.columns:
+            tc1_filtrado = tc1[tc1[id_comercializador_col] == 23442]
+            count_nius_tc1 = tc1_filtrado[niu_col].nunique()
             st.write(f"Número de NIUs en TC1 después de filtrar: {count_nius_tc1}")
         else:
             st.error("Las columnas esperadas no están en TC1.")
 
-        # Validación en TC2
-        if 'NIU' in tc2.columns:
-            tc2_sin_duplicados = tc2.drop_duplicates(subset='NIU')
-            count_nius_tc2 = tc2_sin_duplicados['NIU'].nunique()
+        # **Validación de TC2 (NIUs y Tarifas)**
+        if niu_col in tc2.columns:
+
+            # Contar NIUs después de eliminar duplicados
+            tc2_sin_duplicados = tc2.drop_duplicates(subset=niu_col)
+            count_nius_tc2 = tc2_sin_duplicados[niu_col].nunique()
             st.write(f"Número de NIUs en TC2 después de eliminar duplicados: {count_nius_tc2}")
 
+            # Comparación de NIUs TC1 vs TC2
             if count_nius_tc1 == count_nius_tc2 - 1:
                 st.success("✅ El número de NIUs en TC2 coincide con el valor esperado.")
             else:
                 st.error("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
-
+            # Validar NIUs duplicados con diferentes tarifas
             if 'Tipo de Tarifa' in tc2.columns:
                 duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
                 different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
                 nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
                 if not nius_with_different_tarifas.empty:
                     st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
-                    st.dataframe(duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)])
+                    niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
+                    st.write("### NIUs con tipo de tarifa diferente:")
+                    st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
                 else:
                     st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
+
         else:
             st.error("❌ Las columnas esperadas no están en TC2.")
-
-        # Generación de Tabla de Tarifas
-        required_columns = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 'NIVEL DE TENSION', 'PORCENTAJE PROPIEDAD DEL ACTIVO', 'CODIGO AREA ESPECIAL']
-
-        if all(col in tc1_filtrado.columns for col in required_columns):
-            Tarifas = tc1_filtrado[required_columns].copy()
-            Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
-            Tarifas.replace({'ESTRATO': {7: 'I', 8: 'C', 9: 'O', 11: 'AP'}, 'UBICACION': {1: 'R', 2: 'U'}, 'CARGA DE INVERSION': {101: 0}}, inplace=True)
-
-            # Crear tabla dinámica
-            pivot_table = pd.pivot_table(tc2, index='NIU', values=['Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario'], aggfunc='sum')
-            pivot_table.reset_index(inplace=True)
-            tblDinamicaTc2 = pivot_table[['NIU', 'Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario']]
-
-            # Convertir a string y eliminar espacios
-            for df in [Tarifas, tblDinamicaTc2, tc2_sin_duplicados]:
-                df['NIU'] = df['NIU'].astype(str).str.strip()
-
-            # Añadir 'Tipo de Tarifa'
-            tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'Tipo de Tarifa']], on='NIU', how='left')
-            Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
-            Tarifas['Tipo de Tarifa'] = Tarifas['Tipo de Tarifa'].replace({1: 'R', 2: 'NR'})
-
-            # Reorganizar y renombrar columnas
-            Tarifas = Tarifas[['NIU', 'ESTRATO', 'Tipo de Tarifa', 'Consumo Usuario (kWh)',
-                               'Valor Facturación por Consumo Usuario', 'UBICACION',
-                               'DIVIPOLA', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']]
-            Tarifas.rename(columns={'Tipo de Tarifa': 'TIPO TARIFA', 'Consumo Usuario (kWh)': 'CONSUMO',
-                                    'Valor Facturación por Consumo Usuario': 'FACTURACION CONSUMO',
-                                    'DIVIPOLA': 'DAVIPOLA'}, inplace=True)
-
-            st.write("### Tabla de Tarifas Generada:")
-            st.dataframe(Tarifas)
-        else:
-            st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
     except Exception as e:
         st.error(f"Ocurrió un error al procesar los archivos: {e}")
 
+    # **Añadir el Cliente de otro mercado**
+    niu_filtrado = tc2[(tc2['NIU'] == 898352932) | (tc2['NIU'] == 18124198)]
+    consumo_usuario = niu_filtrado['Consumo Usuario (kWh)'].values[0]
+    valor_facturacion = niu_filtrado['Valor Facturación por Consumo Usuario'].values[0]
+    nueva_fila = pd.DataFrame({
+        'NIU': [898352932],
+        'ESTRATO': ['I'],
+        'TIPO TARIFA': ['NR'],
+        'CONSUMO': [consumo_usuario],
+        'FACTURACION CONSUMO': [valor_facturacion],
+        'UBICACION': ['U'],
+        'DAVIPOLA': [13001000],
+        'MUNICIPIO': ['CARTAGENA'],
+        'NIVEL DE TENSION': [2],
+        'CARGA DE INVERSION': [0],
+        'ZE': [0]
+    })
+    Tarifas3 = pd.concat([Tarifas3, nueva_fila], ignore_index=True)
+
+# **Botón para limpiar la app**
 if st.button("Limpiar"):
     st.experimental_rerun()
