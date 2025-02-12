@@ -107,7 +107,20 @@ if all(file_dict.values()):
         tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'Tipo de Tarifa']], on='NIU', how='left')
         Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
         Tarifas['Tipo de Tarifa'] = Tarifas['Tipo de Tarifa'].replace({1: 'R', 2: 'NR'})
-        
+        # Reorganizar las columnas en el orden deseado
+        Tarifas = Tarifas[['NIU', 'ESTRATO', 'Tipo de Tarifa', 'Consumo Usuario (kWh)',
+                             'Valor Facturación por Consumo Usuario', 'UBICACION',
+                             'DIVIPOLA', 'Municipio', 'NIVEL DE TENSION',
+                             'CARGA DE INVERSION', 'ZE']]
+
+        # Renombrar las columnas según los nuevos nombres proporcionados
+        Tarifas = Tarifas.rename(columns={
+            'Tipo de Tarifa': 'TIPO TARIFA',
+            'Consumo Usuario (kWh)': 'CONSUMO',
+            'Valor Facturación por Consumo Usuario': 'FACTURACION CONSUMO',
+            'Municipio': 'MUNICIPIO',
+            'DIVIPOLA': 'DAVIPOLA'
+        })
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
