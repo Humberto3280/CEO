@@ -50,19 +50,6 @@ if all(file_dict.values()):
 
         # **Validación de TC2 (NIUs y Tarifas)**
         if niu_col in tc2.columns:
-            # Validar NIUs duplicados con diferentes tarifas
-            if 'Tipo de Tarifa' in tc2.columns:
-                duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
-                different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
-                nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
-
-                if not nius_with_different_tarifas.empty:
-                    st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
-                    niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
-                    st.write("### NIUs con tipo de tarifa diferente:")
-                    st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
-                else:
-                    st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
 
             # Contar NIUs después de eliminar duplicados
             tc2_sin_duplicados = tc2.drop_duplicates(subset=niu_col)
@@ -74,6 +61,18 @@ if all(file_dict.values()):
                 st.success("✅ El número de NIUs en TC2 coincide con el valor esperado.")
             else:
                 st.error("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
+            # Validar NIUs duplicados con diferentes tarifas
+            if 'Tipo de Tarifa' in tc2.columns:
+                duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
+                different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
+                nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
+                if not nius_with_different_tarifas.empty:
+                    st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
+                    niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
+                    st.write("### NIUs con tipo de tarifa diferente:")
+                    st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
+                else:
+                    st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
 
         else:
             st.error("❌ Las columnas esperadas no están en TC2.")
