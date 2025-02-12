@@ -95,7 +95,7 @@ if all(file_dict.values()):
         """# Ahora se traen los nombre de los municipios según correspondan al código DAVIPOLA"""
 
         # Realiza la combinación de los DataFrames
-        Tarifas = Tarifas.merge(davipola[['Código DIVIPOLA', 'Nombre Municipio ']],
+        Tarifas = Tarifas.merge(divipola[['Código DIVIPOLA', 'Nombre Municipio ']],
                                 left_on='DIVIPOLA', right_on='Código DIVIPOLA', how='left')
 
         # Renombra la nueva columna con el nombre del municipio
