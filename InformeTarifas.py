@@ -78,27 +78,6 @@ if all(file_dict.values()):
             # Mostrar la tabla en la app
             st.write("### Tabla de Tarifas Generada:")
             st.dataframe(Tarifas)
-
-            # Guardar el archivo en un buffer de memoria para la descarga
-            @st.cache_data
-            def convertir_a_excel(df):
-                from io import BytesIO
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                    df.to_excel(writer, sheet_name='Tarifas', index=False)
-                processed_data = output.getvalue()
-                return processed_data
-
-            excel_data = convertir_a_excel(Tarifas)
-
-            # Botón de descarga
-            st.download_button(
-                label="📥 Descargar Tarifas.xlsx",
-                data=excel_data,
-                file_name="Tarifas.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
         else:
             st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
