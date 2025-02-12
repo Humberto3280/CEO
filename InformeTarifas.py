@@ -37,8 +37,6 @@ if all(file_dict.values()):
         divipola = pd.read_excel(file_dict["DIVIPOLA"])
         bitacora = pd.read_excel(file_dict["BITACORA"])
 
-        st.write("### Columnas en AP:", ap.columns.tolist())
-
         # Aplicar filtro en TC1
         id_comercializador_col = 'ID COMERCIALIZADOR'
         niu_col = 'NIU'
@@ -50,67 +48,58 @@ if all(file_dict.values()):
         else:
             st.error("Las columnas esperadas no están en TC1.")
 
-        # Validación de TC2
+        # **Validación de TC2 (NIUs y Tarifas)**
         if niu_col in tc2.columns:
+            # Validar NIUs duplicados con diferentes tarifas
+            if 'Tipo de Tarifa' in tc2.columns:
+                duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
+                different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
+                nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
+
+                if not nius_with_different_tarifas.empty:
+                    st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
+                    niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
+                    st.write("### NIUs con tipo de tarifa diferente:")
+                    st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
+                else:
+                    st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
+
+            # Contar NIUs después de eliminar duplicados
             tc2_sin_duplicados = tc2.drop_duplicates(subset=niu_col)
             count_nius_tc2 = tc2_sin_duplicados[niu_col].nunique()
             st.write(f"Número de NIUs en TC2 después de eliminar duplicados: {count_nius_tc2}")
 
-            # Comparación directa
+            # Comparación de NIUs TC1 vs TC2
             if count_nius_tc1 == count_nius_tc2 - 1:
-                st.success("El número de NIUs en TC2 coincide con el valor esperado.")
+                st.success("✅ El número de NIUs en TC2 coincide con el valor esperado.")
             else:
-                st.error("El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
+                st.error("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
+
         else:
-            st.error("Las columnas esperadas no están en TC2. Verifica los nombres de las columnas.")
+            st.error("❌ Las columnas esperadas no están en TC2.")
 
     except Exception as e:
         st.error(f"Ocurrió un error al procesar los archivos: {e}")
 
-    # Verificar que las columnas necesarias existen en TC1
+    # **Generación de Tabla de Tarifas**
     required_columns = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 
                         'NIVEL DE TENSION', 'PORCENTAJE PROPIEDAD DEL ACTIVO', 'CODIGO AREA ESPECIAL']
 
     if all(col in tc1_filtrado.columns for col in required_columns):
-        # Crear la nueva tabla con las columnas requeridas
         Tarifas = tc1_filtrado[required_columns].copy()
         Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
 
-        # Modificar valores en 'ESTRATO'
+        # Modificar valores en columnas
         Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
-        
-        # Modificar valores en 'UBICACION'
         Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
-        
-        # Modificar valores de "CARGA DE INVERSION"
         Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
 
-        # Mostrar la tabla en la app
+        # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
-    # Verificar si hay NIU duplicados con diferentes tipos de tarifa en TC2
-    if 'NIU' in tc2.columns and 'Tipo de Tarifa' in tc2.columns:
-        # Paso 1: Encontrar NIU duplicados
-        duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
 
-        # Paso 2: Verificar si esos NIU duplicados tienen el mismo tipo de tarifa
-        different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
-
-        # Paso 3: Filtrar los NIU que tienen más de un tipo de tarifa
-        nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
-
-        # Paso 4: Mostrar los resultados en Streamlit
-        if not nius_with_different_tarifas.empty:
-            st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
-            niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
-            st.write("### NIUs con tipo de tarifa diferente:")
-            st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
-        else:
-            st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
-    else:
-        st.error("❌ No se encontraron las columnas necesarias en TC2 para la validación de tarifas.")
-# Botón para limpiar la app
+# **Botón para limpiar la app**
 if st.button("Limpiar"):
     st.experimental_rerun()
