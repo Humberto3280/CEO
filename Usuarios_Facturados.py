@@ -22,7 +22,7 @@ if tc1_file and divipola_file:
 
     # Filtrar por ID_COMERCIALIZADOR = 23442
     tc1_filtrado = tc1[tc1['ID COMERCIALIZADOR'] == 23442]
-    count_nius_tc1 = tc1_filtrado['PRODUCT_ID'].nunique()
+    count_nius_tc1 = tc1_filtrado['NIU'].nunique()
 
     st.subheader("Número de NIUs en TC1 después de filtrar:")
     st.write(count_nius_tc1)
