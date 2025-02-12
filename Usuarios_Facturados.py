@@ -21,14 +21,14 @@ if tc1_file and divipola_file:
     st.write(divipola.head())
 
     # Filtrar por ID_COMERCIALIZADOR = 23442
-    tc1_filtrado = tc1[tc1['ID_COMERCIALIZADOR'] == 23442]
+    tc1_filtrado = tc1[tc1['ID COMERCIALIZADOR'] == 23442]
     count_nius_tc1 = tc1_filtrado['PRODUCT_ID'].nunique()
 
     st.subheader("Número de NIUs en TC1 después de filtrar:")
     st.write(count_nius_tc1)
 
     # Selección de columnas y renombrado
-    usuariosFac = tc1_filtrado[['PRODUCT_ID', 'COD_DANE', 'ESTRATO']]
+    usuariosFac = tc1_filtrado[['NIU', 'CODIGO DANE (NIU)', 'ESTRATO']]
     usuariosFac.columns = ['NIU', 'DIVIPOLA', 'ESTRATO']
 
     # Unir con Divipola para obtener Municipio y Zona
