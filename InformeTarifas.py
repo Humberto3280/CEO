@@ -92,6 +92,17 @@ if all(file_dict.values()):
         Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
         Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
         Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
+        """# Ahora se traen los nombre de los municipios según correspondan al código DAVIPOLA"""
+
+        # Realiza la combinación de los DataFrames
+        Tarifas = Tarifas.merge(davipola[['Código DIVIPOLA', 'Nombre Municipio ']],
+                                left_on='DIVIPOLA', right_on='Código DIVIPOLA', how='left')
+
+        # Renombra la nueva columna con el nombre del municipio
+        Tarifas = Tarifas.rename(columns={'Nombre Municipio ': 'Municipio'})
+
+        # Elimina la columna 'Código DIVIPOLA' si no es necesaria
+        Tarifas = Tarifas.drop(columns=['Código DIVIPOLA'])
 
         # Crear la tabla dinámica sumando los valores
         pivot_table = pd.pivot_table(tc2, index='NIU', values=['Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario'], aggfunc='sum')
@@ -107,6 +118,7 @@ if all(file_dict.values()):
         tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'Tipo de Tarifa']], on='NIU', how='left')
         Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
         Tarifas['Tipo de Tarifa'] = Tarifas['Tipo de Tarifa'].replace({1: 'R', 2: 'NR'})
+        
         # Reorganizar las columnas en el orden deseado
         Tarifas = Tarifas[['NIU', 'ESTRATO', 'Tipo de Tarifa', 'Consumo Usuario (kWh)',
                              'Valor Facturación por Consumo Usuario', 'UBICACION',
