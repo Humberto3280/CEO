@@ -3,34 +3,50 @@ import streamlit as st
 
 st.title("Carga y procesamiento de archivos")
 
-# Subir archivos
-uploaded_tc1 = st.file_uploader("Subir TC1.csv", type=["csv"])
-uploaded_tc2 = st.file_uploader("Subir TC2.xlsx", type=["xlsx"])
-uploaded_ap = st.file_uploader("Subir AP.xlsx", type=["xlsx"])
-uploaded_divipola = st.file_uploader("Subir Dane_Divipola_08_2012.xlsx", type=["xlsx"])
-uploaded_bitacora = st.file_uploader("Subir Bitacora.xlsx", type=["xlsx"])
+# Subir archivos (un solo botón para todos)
+uploaded_files = st.file_uploader(
+    "Subir archivos (TC1.csv, TC2.xlsx, AP.xlsx, Divipola.xlsx, Bitacora.xlsx)", 
+    type=["csv", "xlsx"], 
+    accept_multiple_files=True
+)
+
+# Diccionario para almacenar los archivos subidos
+file_dict = {"TC1": None, "TC2": None, "AP": None, "DIVIPOLA": None, "BITACORA": None}
+
+# Asociar cada archivo subido a su clave correspondiente
+for file in uploaded_files:
+    if "TC1" in file.name.upper():
+        file_dict["TC1"] = file
+    elif "TC2" in file.name.upper():
+        file_dict["TC2"] = file
+    elif "AP" in file.name.upper():
+        file_dict["AP"] = file
+    elif "DIVIPOLA" in file.name.upper():
+        file_dict["DIVIPOLA"] = file
+    elif "BITACORA" in file.name.upper():
+        file_dict["BITACORA"] = file
 
 # Verificar si ya hemos cargado los archivos antes
-if "tc1" not in st.session_state and uploaded_tc1:
-    st.session_state.tc1 = pd.read_csv(uploaded_tc1)
+if "tc1" not in st.session_state and file_dict["TC1"]:
+    st.session_state.tc1 = pd.read_csv(file_dict["TC1"])
 
-if "tc2" not in st.session_state and uploaded_tc2:
-    st.session_state.tc2 = pd.read_excel(uploaded_tc2)
+if "tc2" not in st.session_state and file_dict["TC2"]:
+    st.session_state.tc2 = pd.read_excel(file_dict["TC2"])
 
-if "archivo_ap" not in st.session_state and uploaded_ap:
+if "archivo_ap" not in st.session_state and file_dict["AP"]:
     def extraer_datos_excel(archivo_entrada, hoja_origen):
         df = pd.read_excel(archivo_entrada, sheet_name=hoja_origen, header=3)
         df = df[~df.iloc[:, 0].astype(str).str.contains("Total general", na=False)]
         return df
-    st.session_state.archivo_ap = extraer_datos_excel(uploaded_ap, "TABLA TARIFAS")
+    st.session_state.archivo_ap = extraer_datos_excel(file_dict["AP"], "TABLA TARIFAS")
 
-if "davipola" not in st.session_state and uploaded_divipola:
-    st.session_state.davipola = pd.read_excel(uploaded_divipola)
+if "davipola" not in st.session_state and file_dict["DIVIPOLA"]:
+    st.session_state.davipola = pd.read_excel(file_dict["DIVIPOLA"])
 
-if "bitacora" not in st.session_state and uploaded_bitacora:
-    st.session_state.bitacora = pd.read_excel(uploaded_bitacora)
+if "bitacora" not in st.session_state and file_dict["BITACORA"]:
+    st.session_state.bitacora = pd.read_excel(file_dict["BITACORA"])
 
-# Si todos los archivos están cargados, procedemos con el análisis
+# Si todos los archivos están cargados, proceder con el análisis
 if all(key in st.session_state for key in ["tc1", "tc2", "archivo_ap", "davipola", "bitacora"]):
     st.write("### Columnas en AP:", st.session_state.archivo_ap.columns.tolist())
 
@@ -60,5 +76,8 @@ if all(key in st.session_state for key in ["tc1", "tc2", "archivo_ap", "davipola
                 st.success("El número de NIUs en TC2 coincide con el valor esperado.")
             else:
                 st.error("El número de NIUs en TC2 no coincide con el valor esperado.")
-    else:
-        st.error("Las columnas esperadas no están en TC2.")
+
+# Botón para reiniciar la app
+if st.button("Hacer nuevo informe"):
+    st.session_state.clear()
+    st.experimental_rerun()
