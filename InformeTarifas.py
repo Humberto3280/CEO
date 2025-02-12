@@ -93,6 +93,21 @@ if all(file_dict.values()):
         Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
         Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
 
+        # Crear la tabla dinámica sumando los valores
+        pivot_table = pd.pivot_table(tc2, index='NIU', values=['Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario'], aggfunc='sum')
+        pivot_table.reset_index(inplace=True)
+        tblDinamicaTc2 = pivot_table[['NIU', 'Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario']]
+
+        # Convertir las columnas NIU a tipo string y eliminar espacios en blanco
+        Tarifas['NIU'] = Tarifas['NIU'].astype(str).str.strip()
+        tblDinamicaTc2['NIU'] = tblDinamicaTc2['NIU'].astype(str).str.strip()
+        tc2_sin_duplicados['NIU'] = tc2_sin_duplicados['NIU'].astype(str).str.strip()
+
+        # Añadir 'Tipo de Tarifa'
+        tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'Tipo de Tarifa']], on='NIU', how='left')
+        Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
+        Tarifas['Tipo de Tarifa'] = Tarifas['Tipo de Tarifa'].replace({1: 'R', 2: 'NR'})
+        
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
