@@ -23,10 +23,7 @@ if uploaded_tc1 and uploaded_tc2 and uploaded_ap and uploaded_divipola and uploa
     archivo_ap = extraer_datos_excel(uploaded_ap, "TABLA TARIFAS")
     davipola = pd.read_excel(uploaded_divipola)
     bitacora = pd.read_excel(uploaded_bitacora)
-    
-    # Mostrar nombres de columnas para verificación
-    st.write("### Columnas en TC1:", tc1.columns.tolist())
-    st.write("### Columnas en TC2:", tc2.columns.tolist())
+    #Para validar que el archivo AP se leyo correctamente
     st.write("### Columnas en AP:", archivo_ap.columns.tolist())
     
     # Aplicar filtro por ID_COMERCIALIZADOR = 23442 fuera del bloque de carga
