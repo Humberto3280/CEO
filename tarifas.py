@@ -27,7 +27,8 @@ hoja_origen = "TABLA TARIFAS"
 archivo_ap = extraer_datos_excel(archivo_entrada, hoja_origen)
 
 #leer archivo divipola para los nombres de los municipios
-davipola = pd.read_excel('/workspaces/codespaces-jupyter/data/Dane_Divipola_08_2012.xlsx')
+davipola = pd.read_excel('Dane_Divipola_08_2012.xlsx')
+bitacora = pd.read_excel('Bitacora.xlsx')
 
 # Imprimir nombres de columnas de TC1 y TC2 para verificar
 print("Columnas en TC1:", tc1.columns)
@@ -386,10 +387,6 @@ nombre_archivo = f"/workspaces/codespaces-jupyter/informes/informe_Dane_{nombre_
 informeDaneVf.to_csv(nombre_archivo, index=False)
 
 """# Validación Bitacora"""
-
-bitacora = pd.read_excel('/workspaces/codespaces-jupyter/data/Bitacora.xlsx')
-
-bitacora.head(2)
 
 # Convertir la columna 'Producto' de bitácora a string para que coincida con el tipo de 'NIU' en tarifas4
 bitacora['Producto'] = bitacora['Producto'].astype(str)
