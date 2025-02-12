@@ -44,12 +44,14 @@ if uploaded_tc1 and uploaded_tc2 and uploaded_ap and uploaded_divipola and uploa
         count_nius_tc2 = tc2_sin_duplicados[niu_col].nunique()
         st.write(f"Número de NIUs en TC2 después de eliminar duplicados: {count_nius_tc2}")
         
-        # Comparación entre TC1 y TC2
-        # Preguntar al usuario cuánto restar
+         # Preguntar al usuario cuánto restar
         ajuste_nius = st.number_input("Ingrese el valor a restar en la validación de TC2:", min_value=0, value=1, step=1)
-        if count_nius_tc1 == count_nius_tc2 - ajuste_nius:
-            st.success("El número de NIUs en TC2 coincide con el valor esperado.")
-        else:
-            st.error("El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
+
+        # Botón para confirmar y validar
+        if st.button("Validar número de NIUs en TC2"):
+            if count_nius_tc1 == count_nius_tc2 - ajuste_nius:
+                st.success("El número de NIUs en TC2 coincide con el valor esperado.")
+            else:
+                st.error("El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos o ajusta el valor.")
     else:
         st.error("Las columnas esperadas no están en TC2. Verifica los nombres de las columnas.")
