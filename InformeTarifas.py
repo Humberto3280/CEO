@@ -80,24 +80,70 @@ if all(file_dict.values()):
     except Exception as e:
         st.error(f"Ocurrió un error al procesar los archivos: {e}")
 
-    # **Añadir el Cliente de otro mercado**
-    niu_filtrado = tc2[(tc2['NIU'] == 898352932) | (tc2['NIU'] == 18124198)]
-    consumo_usuario = niu_filtrado['Consumo Usuario (kWh)'].values[0]
-    valor_facturacion = niu_filtrado['Valor Facturación por Consumo Usuario'].values[0]
-    nueva_fila = pd.DataFrame({
-        'NIU': [898352932],
-        'ESTRATO': ['I'],
-        'TIPO TARIFA': ['NR'],
-        'CONSUMO': [consumo_usuario],
-        'FACTURACION CONSUMO': [valor_facturacion],
-        'UBICACION': ['U'],
-        'DAVIPOLA': [13001000],
-        'MUNICIPIO': ['CARTAGENA'],
-        'NIVEL DE TENSION': [2],
-        'CARGA DE INVERSION': [0],
-        'ZE': [0]
-    })
-    Tarifas3 = pd.concat([Tarifas3, nueva_fila], ignore_index=True)
+    # **Generación de Tabla de Tarifas**
+    required_columns = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 
+                        'NIVEL DE TENSION', 'PORCENTAJE PROPIEDAD DEL ACTIVO', 'CODIGO AREA ESPECIAL']
+
+    if all(col in tc1_filtrado.columns for col in required_columns):
+        Tarifas = tc1_filtrado[required_columns].copy()
+        Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
+
+        # Modificar valores en columnas
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
+        Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
+        Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
+
+        # Crear la tabla dinámica sumando los valores
+        pivot_table = pd.pivot_table(tc2, index='NIU', values=['Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario'], aggfunc='sum')
+        pivot_table.reset_index(inplace=True)
+        tblDinamicaTc2 = pivot_table[['NIU', 'Consumo Usuario (kWh)', 'Valor Facturación por Consumo Usuario']]
+
+        # Convertir las columnas NIU a tipo string y eliminar espacios en blanco
+        Tarifas['NIU'] = Tarifas['NIU'].astype(str).str.strip()
+        tblDinamicaTc2['NIU'] = tblDinamicaTc2['NIU'].astype(str).str.strip()
+        tc2_sin_duplicados['NIU'] = tc2_sin_duplicados['NIU'].astype(str).str.strip()
+
+        # Añadir 'Tipo de Tarifa'
+        tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'Tipo de Tarifa']], on='NIU', how='left')
+        Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
+        Tarifas['Tipo de Tarifa'] = Tarifas['Tipo de Tarifa'].replace({1: 'R', 2: 'NR'})
+        # Reorganizar las columnas en el orden deseado
+        Tarifas = Tarifas[['NIU', 'ESTRATO', 'Tipo de Tarifa', 'Consumo Usuario (kWh)',
+                             'Valor Facturación por Consumo Usuario', 'UBICACION',
+                             'DIVIPOLA', 'Municipio', 'NIVEL DE TENSION',
+                             'CARGA DE INVERSION', 'ZE']]
+
+        # Renombrar las columnas según los nuevos nombres proporcionados
+        Tarifas = Tarifas.rename(columns={
+            'Tipo de Tarifa': 'TIPO TARIFA',
+            'Consumo Usuario (kWh)': 'CONSUMO',
+            'Valor Facturación por Consumo Usuario': 'FACTURACION CONSUMO',
+            'Municipio': 'MUNICIPIO',
+            'DIVIPOLA': 'DAVIPOLA'
+        })
+        # **Añadir el Cliente de otro mercado**
+        niu_filtrado = tc2[(tc2['NIU'] == 898352932) | (tc2['NIU'] == 18124198)]
+        consumo_usuario = niu_filtrado['Consumo Usuario (kWh)'].values[0]
+        valor_facturacion = niu_filtrado['Valor Facturación por Consumo Usuario'].values[0]
+        nueva_fila = pd.DataFrame({
+            'NIU': [898352932],
+            'ESTRATO': ['I'],
+            'TIPO TARIFA': ['NR'],
+            'CONSUMO': [consumo_usuario],
+            'FACTURACION CONSUMO': [valor_facturacion],
+            'UBICACION': ['U'],
+            'DAVIPOLA': [13001000],
+            'MUNICIPIO': ['CARTAGENA'],
+            'NIVEL DE TENSION': [2],
+            'CARGA DE INVERSION': [0],
+            'ZE': [0]
+        })
+        Tarifas = pd.concat([Tarifas, nueva_fila], ignore_index=True)
+        # Mostrar tabla en Streamlit
+        st.write("### Tabla de Tarifas Generada:")
+        st.dataframe(Tarifas)
+    else:
+        st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
 # **Botón para limpiar la app**
 if st.button("Limpiar"):
