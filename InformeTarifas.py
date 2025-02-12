@@ -90,7 +90,27 @@ if all(file_dict.values()):
         st.dataframe(Tarifas)
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
+    # Verificar si hay NIU duplicados con diferentes tipos de tarifa en TC2
+    if 'NIU' in tc2.columns and 'Tipo de Tarifa' in tc2.columns:
+        # Paso 1: Encontrar NIU duplicados
+        duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
 
+        # Paso 2: Verificar si esos NIU duplicados tienen el mismo tipo de tarifa
+        different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
+
+        # Paso 3: Filtrar los NIU que tienen más de un tipo de tarifa
+        nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
+
+        # Paso 4: Mostrar los resultados en Streamlit
+        if not nius_with_different_tarifas.empty:
+            st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
+            niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
+            st.write("### NIUs con tipo de tarifa diferente:")
+            st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
+        else:
+            st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
+    else:
+        st.error("❌ No se encontraron las columnas necesarias en TC2 para la validación de tarifas.")
 # Botón para limpiar la app
 if st.button("Limpiar"):
     st.experimental_rerun()
