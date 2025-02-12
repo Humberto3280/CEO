@@ -49,7 +49,6 @@ if all(file_dict.values()):
             st.write(f"Número de NIUs en TC1 después de filtrar: {count_nius_tc1}")
         else:
             st.error("Las columnas esperadas no están en TC1.")
-            st.stop()
 
         # Validación de TC2
         if niu_col in tc2.columns:
@@ -64,26 +63,34 @@ if all(file_dict.values()):
                 st.error("El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
         else:
             st.error("Las columnas esperadas no están en TC2. Verifica los nombres de las columnas.")
-            st.stop()
-
-        # Aquí se empieza a construir el archivo de tarifas
-        required_columns = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 
-                            'NIVEL DE TENSION', 'PORCENTAJE PROPIEDAD DEL ACTIVO', 'CODIGO AREA ESPECIAL']
-
-        if all(col in tc1_filtrado.columns for col in required_columns):
-            # Crear la nueva tabla con las columnas requeridas
-            Tarifas = tc1_filtrado[required_columns].copy()
-            Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
-            
-            # Mostrar la tabla en la app
-            st.write("### Tabla de Tarifas Generada:")
-            st.dataframe(Tarifas)
-        else:
-            st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
     except Exception as e:
-        st.error(f"❌ Ocurrió un error al procesar los archivos: {e}")
+        st.error(f"Ocurrió un error al procesar los archivos: {e}")
+
+    # Verificar que las columnas necesarias existen en TC1
+    required_columns = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 
+                        'NIVEL DE TENSION', 'PORCENTAJE PROPIEDAD DEL ACTIVO', 'CODIGO AREA ESPECIAL']
+
+    if all(col in tc1_filtrado.columns for col in required_columns):
+        # Crear la nueva tabla con las columnas requeridas
+        Tarifas = tc1_filtrado[required_columns].copy()
+        Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
+
+        # Modificar valores en 'ESTRATO'
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
+        
+        # Modificar valores en 'UBICACION'
+        Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
+        
+        # Modificar valores de "CARGA DE INVERSION"
+        Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
+
+        # Mostrar la tabla en la app
+        st.write("### Tabla de Tarifas Generada:")
+        st.dataframe(Tarifas)
+    else:
+        st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
 # Botón para limpiar la app
-if st.button("🔄 Limpiar"):
+if st.button("Limpiar"):
     st.experimental_rerun()
