@@ -39,7 +39,7 @@ if tc1_file and divipola_file:
 
     usuariosFac2 = usuariosFac1.merge(divipola[['Código DIVIPOLA', 'Zona']],
                                       left_on='DIVIPOLA', right_on='Código DIVIPOLA', how='left')
-    usuariosFac2 = usuariosFac2.rename(columns={'Zona ': 'ZONA'})
+    usuariosFac2 = usuariosFac2.rename(columns={'Zona': 'ZONA'})
     usuariosFac2 = usuariosFac2.drop(columns=['Código DIVIPOLA'])
 
     # Eliminar registros con "CALP"
