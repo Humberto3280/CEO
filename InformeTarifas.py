@@ -333,13 +333,13 @@ if all(file_dict.values()):
             zip_buffer.seek(0)
             return zip_buffer
 
-# Botón para descargar los 3 archivos en un ZIP
-st.download_button(
-    label="📥 Descargar Tarifas, Informe DANE y Diferencias",
-    data=create_zip(),
-    file_name="Reportes_Tarifas.zip",
-    mime="application/zip"
-)
+        # Botón para descargar los 3 archivos en un ZIP
+        st.download_button(
+            label="📥 Descargar Tarifas, Informe DANE y Diferencias",
+            data=create_zip(),
+            file_name="Reportes_Tarifas.zip",
+            mime="application/zip"
+        )
 
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
