@@ -282,7 +282,7 @@ if all(file_dict.values()):
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
 
-"""#**Creación de informe DANE**"""
+        #Creación de informe DANE
 
         # Filtrar DaNE por Ubicacion='U' y Municipio='Popayán'
         informeDane = Tarifas[(Tarifas['UBICACION'] == 'U') & (Tarifas['MUNICIPIO'] == 'POPAYAN')]
