@@ -158,30 +158,30 @@ if all(file_dict.values()):
         Tarifas = Tarifas[~Tarifas['NIU'].str.contains('CAL')]
 
         # Convertir los elementos de la columna productos a str
-        AP['producto'] = AP['producto'].astype(str).str.strip()
+        ap['producto'] = ap['producto'].astype(str).str.strip()
 
         # Validar que el archivo AP no contenga productos vacíos
-        if AP['producto'].eq('').any():
+        if ap['producto'].eq('').any():
             st.error("❌ El archivo AP contiene productos vacíos. Por favor, corrige los datos.")
             st.stop()  # Detiene la ejecución del script en Streamlit
         else:
             st.success("✅ Validación exitosa: No hay productos vacíos en el archivo AP.")
 
         # Modificar valores en 'Tipo_tarifa'
-        AP['tipo de tarifa'] = AP['tipo de tarifa'].replace({1: 'R', 2: 'NR'})
+        ap['tipo de tarifa'] = ap['tipo de tarifa'].replace({1: 'R', 2: 'NR'})
 
         # Modificar valores en 'ESTRATO'
-        AP['estrato'] = AP['estrato'].replace({11: 'AP'})
+        ap['estrato'] = ap['estrato'].replace({11: 'AP'})
 
         # Filtrar archivo AP por estrato='AP'
-        AP = AP[AP['estrato'] == 'AP']
+        ap = ap[ap['estrato'] == 'AP']
 
 
         # Filtrar Tarifas sin CALP por estrato 'AP'
         tarifas_val = Tarifas[Tarifas['ESTRATO'] == 'AP']
 
         # Convertir las columnas NIU a conjuntos
-        nius_archivo_ap = set(AP['producto'].astype(str).str.strip())
+        nius_archivo_ap = set(ap['producto'].astype(str).str.strip())
         nius_tarifas_ap = set(tarifas_val['NIU'].astype(str).str.strip())
 
         # Validar que todos los NIU de tarifas_ap_filtrado estén en archivo_ap_filtrado
