@@ -95,6 +95,7 @@ if all(file_dict.values()):
         """# Ahora se traen los nombre de los municipios según correspondan al código DAVIPOLA"""
 
         # Realiza la combinación de los DataFrames
+        divipola.columns = divipola.columns.str.strip()
         Tarifas = Tarifas.merge(divipola[['Código DIVIPOLA', 'Nombre Municipio ']],
                                 left_on='DIVIPOLA', right_on='Código DIVIPOLA', how='left')
 
@@ -151,6 +152,10 @@ if all(file_dict.values()):
             'ZE': [0]
         })
         Tarifas = pd.concat([Tarifas, nueva_fila], ignore_index=True)
+        
+        # **Eliminación de NIUs que contienen 'CAL'**
+        Tarifas['NIU'] = Tarifas['NIU'].astype(str).fillna('') 
+        Tarifas = Tarifas[~Tarifas['NIU'].str.contains('CAL')]
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
