@@ -257,7 +257,27 @@ if all(file_dict.values()):
             st.stop()
         else:
             st.success("✅ Validación exitosa: El DataFrame no tiene valores nulos.")
-        
+
+        # Validación Bitácora
+        bitacora['Producto'] = bitacora['Producto'].astype(str)
+        bitacora = bitacora[bitacora['Tipo Frontera'] == 'Tipo No Regulado']
+        ultima_columna_bitacora = bitacora.columns[-1]
+
+        resultado = pd.merge(
+            bitacora[['Producto', ultima_columna_bitacora]],
+            Tarifas[['NIU', 'CONSUMO']],
+            left_on='Producto', right_on='NIU',
+            how='left'
+        )
+
+        resultado['Diferencia'] = abs(resultado[ultima_columna_bitacora] - resultado['CONSUMO'])
+        resultado['Es Diferente'] = resultado['Diferencia'] > 1
+        diferencias = resultado[resultado['Es Diferente']][['NIU', 'CONSUMO', ultima_columna_bitacora]]
+
+        # Mostrar tabla en diferencias
+        st.write("### Tabla de diferencias:")
+        st.dataframe(diferencias)
+
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
