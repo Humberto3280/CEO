@@ -345,4 +345,4 @@ if all(file_dict.values()):
         
 # **Botón para limpiar la app**
 if st.button("Limpiar"):
-    st.rerun()
+    st.session_state.clear()
