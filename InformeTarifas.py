@@ -96,11 +96,11 @@ if all(file_dict.values()):
 
         # Realiza la combinación de los DataFrames
         divipola.columns = divipola.columns.str.strip()
-        Tarifas = Tarifas.merge(divipola[['Código DIVIPOLA', 'Nombre Municipio ']],
+        Tarifas = Tarifas.merge(divipola[['Código DIVIPOLA', 'Nombre Municipio']],
                                 left_on='DIVIPOLA', right_on='Código DIVIPOLA', how='left')
 
         # Renombra la nueva columna con el nombre del municipio
-        Tarifas = Tarifas.rename(columns={'Nombre Municipio ': 'Municipio'})
+        Tarifas = Tarifas.rename(columns={'Nombre Municipio': 'Municipio'})
 
         # Elimina la columna 'Código DIVIPOLA' si no es necesaria
         Tarifas = Tarifas.drop(columns=['Código DIVIPOLA'])
