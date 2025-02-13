@@ -3,4 +3,3 @@ numpy
 streamlit
 openpyxl
 xlsxwriter
-zipfile
