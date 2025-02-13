@@ -304,6 +304,44 @@ if all(file_dict.values()):
         st.write("### Tabla de informe DANE:")
         st.dataframe(informeDaneVf)
 
+        #Descargar los archivos
+        # Mostrar tabla en Streamlit
+        st.write("Descargar los informes")
+        import io
+
+        # Función para convertir DataFrame en CSV
+        def to_csv(df):
+            output = io.BytesIO()
+            df.to_csv(output, index=False, encoding='utf-8-sig')
+            return output.getvalue()
+
+        # Botón para descargar Tarifas e Informe DANE por separado
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.download_button(
+                label="📥 Descargar Tarifas",
+                data=to_csv(Tarifas),
+                file_name="Tarifas.csv",
+                mime="text/csv"
+            )
+
+            st.download_button(
+                label="📥 Descargar Informe DANE",
+                data=to_csv(informeDaneVf),
+                file_name="Informe_DANE.csv",
+                mime="text/csv"
+            )
+
+        # Botón para descargar Diferencias entre Tarifas y Bitácora
+        with col2:
+            st.download_button(
+                label="📥 Descargar Diferencias entre Tarifas y Bitácora",
+                data=to_csv(diferencias),
+                file_name="Diferencias_Tarifas_Bitacora.csv",
+                mime="text/csv"
+            )
+
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
