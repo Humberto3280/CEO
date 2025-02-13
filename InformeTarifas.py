@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-st.title("Informe tarifas")
+st.title("Generación de informes (tarifas e informe Dane)")
 
 # Subir archivos (un solo botón para todos)
 uploaded_files = st.file_uploader(
@@ -275,7 +275,7 @@ if all(file_dict.values()):
         diferencias = resultado[resultado['Es Diferente']][['NIU', 'CONSUMO', ultima_columna_bitacora]]
 
         # Mostrar tabla en diferencias
-        st.write("### Tabla de diferencias:")
+        st.write("### Tabla de diferencias tarifas con bitacora:")
         st.dataframe(diferencias)
 
         # Mostrar tabla en Streamlit
