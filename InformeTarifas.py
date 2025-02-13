@@ -200,8 +200,23 @@ if all(file_dict.values()):
 
         # Si todo está bien, mostrar éxito
         if not niu_faltantes_en_ap and not niu_faltantes_en_tarifas:
-            st.success("✅ Validación exitosa: Todos los NIU coinciden entre ambos DataFrames.")
+            st.success("✅ Validación exitosa: se puede hacer cruce de AP con tarifas.")
 
+        # Hacer un merge entre Tarifas sin cal y archivo ap basándose en NIU y producto
+        Tarifas = Tarifas.merge(
+            ap[['producto', 'Suma de consumo', 'Suma de facturacion consumo', 'tipo de tarifa']],
+            left_on='NIU',    right_on='producto',
+            how='left'
+        )
+
+        # Actualizar las columnas CONSUMO, FACTURACION CONSUMO y TIPO TARIFA solo si los valores son mayores a cero
+        Tarifas.loc[Tarifas['Suma de consumo'] > 0, 'CONSUMO'] = Tarifas['Suma de consumo']
+        Tarifas.loc[(Tarifas['Suma de facturacion consumo'].notna()) & (Tarifas['Suma de facturacion consumo'] != 0), 'FACTURACION CONSUMO'] = Tarifas['Suma de facturacion consumo']
+        Tarifas.loc[Tarifas['tipo de tarifa'].notna(), 'TIPO TARIFA'] = Tarifas['tipo de tarifa']
+
+        # Eliminar las columnas adicionales si no son necesarias
+        Tarifas = Tarifas.drop(columns=['producto', 'Suma de consumo', 'Suma de facturacion consumo', 'tipo de tarifa'])
+        
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
