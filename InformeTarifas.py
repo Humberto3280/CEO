@@ -216,6 +216,47 @@ if all(file_dict.values()):
 
         # Eliminar las columnas adicionales si no son necesarias
         Tarifas = Tarifas.drop(columns=['producto', 'Suma de consumo', 'Suma de facturacion consumo', 'tipo de tarifa'])
+
+        import numpy as np
+
+        # Redondeo de las columnas Consumo y fact consumo
+        Tarifas['CONSUMO'] = np.floor(Tarifas['CONSUMO'] + 0.5).astype(int)
+        Tarifas['FACTURACION CONSUMO'] = np.floor(Tarifas['FACTURACION CONSUMO'] + 0.5).astype(int)
+
+        # Validación de valores vacíos en la columna NIU
+        if Tarifas['NIU'].eq('').any():
+            st.error("Error: La columna NIU tiene valores vacíos. Revisar los archivos TC1 y TC2.")
+            st.stop()
+        else:
+            st.success("✅ Validación exitosa: La columna NIU no tiene valores vacíos.")
+
+        # Validación de valores negativos en la columna CONSUMO
+        if (Tarifas['CONSUMO'] < 0).any():
+            st.error("Error: La columna CONSUMO tiene valores negativos. Verifica los datos.")
+            st.stop()
+        else:
+            st.success("✅ Validación exitosa: La columna CONSUMO no tiene valores negativos.")
+
+        # Validación de valores negativos en la columna FACTURACION CONSUMO
+        if (Tarifas['FACTURACION CONSUMO'] < 0).any():
+            st.error("Error: La columna FACTURACION CONSUMO tiene valores negativos. Verifica los datos.")
+            st.stop()
+        else:
+            st.success("✅ Validación exitosa: La columna FACTURACION CONSUMO no tiene valores negativos.")
+
+        # Validación de la regla: Si CONSUMO es 0, FACTURACION CONSUMO también debe ser 0
+        if ((Tarifas['CONSUMO'] == 0) & (Tarifas['FACTURACION CONSUMO'] != 0)).any():
+            st.error("Error: Si CONSUMO es 0, FACTURACION CONSUMO también debe ser 0. Hay inconsistencias en los datos.")
+            st.stop()
+        else:
+            st.success("✅ Validación exitosa: No hay inconsistencias entre CONSUMO y FACTURACION CONSUMO.")
+
+        # Validación de valores nulos en todo el DataFrame
+        if Tarifas.isnull().any().any():
+            st.error("Error: El DataFrame contiene valores nulos. Verifica las columnas y corrige los datos.")
+            st.stop()
+        else:
+            st.success("✅ Validación exitosa: El DataFrame no tiene valores nulos.")
         
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
