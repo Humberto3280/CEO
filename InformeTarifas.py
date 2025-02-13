@@ -92,7 +92,7 @@ if all(file_dict.values()):
         Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
         Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
         Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
-        """# Ahora se traen los nombre de los municipios según correspondan al código DAVIPOLA"""
+        # Ahora se traen los nombre de los municipios según correspondan al código DAVIPOLA
 
         # Realiza la combinación de los DataFrames
         divipola.columns = divipola.columns.str.strip()
@@ -308,39 +308,38 @@ if all(file_dict.values()):
         # Mostrar tabla en Streamlit
         st.write("Descargar los informes")
         import io
+        import zipfile
 
-        # Función para convertir DataFrame en CSV
-        def to_csv(df):
-            output = io.BytesIO()
-            df.to_csv(output, index=False, encoding='utf-8-sig')
-            return output.getvalue()
+        # Función para convertir DataFrame en CSV y agregarlo a un archivo ZIP
+        def create_zip():
+            zip_buffer = io.BytesIO()
+    
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                # Guardar Tarifas.csv
+                tarifas_buffer = io.StringIO()
+                Tarifas.to_csv(tarifas_buffer, index=False, encoding='utf-8-sig')
+                zip_file.writestr("Tarifas.csv", tarifas_buffer.getvalue())
 
-        # Botón para descargar Tarifas e Informe DANE por separado
-        col1, col2 = st.columns(2)
+                # Guardar Informe_DANE.csv
+                dane_buffer = io.StringIO()
+                informeDaneVf.to_csv(dane_buffer, index=False, encoding='utf-8-sig')
+                zip_file.writestr("Informe_DANE.csv", dane_buffer.getvalue())
 
-        with col1:
-            st.download_button(
-                label="📥 Descargar Tarifas",
-                data=to_csv(Tarifas),
-                file_name="Tarifas.csv",
-                mime="text/csv"
-            )
+                # Guardar Diferencias_Tarifas_Bitacora.csv
+                diferencias_buffer = io.StringIO()
+                diferencias.to_csv(diferencias_buffer, index=False, encoding='utf-8-sig')
+                zip_file.writestr("Diferencias_Tarifas_Bitacora.csv", diferencias_buffer.getvalue())
 
-            st.download_button(
-                label="📥 Descargar Informe DANE",
-                data=to_csv(informeDaneVf),
-                file_name="Informe_DANE.csv",
-                mime="text/csv"
-            )
+            zip_buffer.seek(0)
+            return zip_buffer
 
-        # Botón para descargar Diferencias entre Tarifas y Bitácora
-        with col2:
-            st.download_button(
-                label="📥 Descargar Diferencias entre Tarifas y Bitácora",
-                data=to_csv(diferencias),
-                file_name="Diferencias_Tarifas_Bitacora.csv",
-                mime="text/csv"
-            )
+# Botón para descargar los 3 archivos en un ZIP
+st.download_button(
+    label="📥 Descargar Tarifas, Informe DANE y Diferencias",
+    data=create_zip(),
+    file_name="Reportes_Tarifas.zip",
+    mime="application/zip"
+)
 
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
