@@ -340,6 +340,7 @@ if all(file_dict.values()):
             file_name="Reportes_Tarifas.zip",
             mime="application/zip"
         )
+        st.stop()
 
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
