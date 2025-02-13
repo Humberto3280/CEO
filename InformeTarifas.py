@@ -342,8 +342,8 @@ if all(file_dict.values()):
         )
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
-st.stop()
-
+        
 # **Botón para limpiar la app**
 if st.button("Limpiar"):
     st.rerun()
+st.stop()
