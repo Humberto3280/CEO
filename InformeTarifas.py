@@ -281,6 +281,29 @@ if all(file_dict.values()):
         # Mostrar tabla en Streamlit
         st.write("### Tabla de Tarifas Generada:")
         st.dataframe(Tarifas)
+
+"""#**Creación de informe DANE**"""
+
+        # Filtrar DaNE por Ubicacion='U' y Municipio='Popayán'
+        informeDane = Tarifas[(Tarifas['UBICACION'] == 'U') & (Tarifas['MUNICIPIO'] == 'POPAYAN')]
+
+        # Crear la tabla dinámica
+        pivot_table = informeDane.pivot_table(
+            index='ESTRATO',  # Agrupar por la columna 'ESTRATO'
+            values=['NIU', 'CONSUMO', 'FACTURACION CONSUMO'],  # Columnas a agregar
+            aggfunc={'NIU': 'count', 'CONSUMO': 'sum', 'FACTURACION CONSUMO': 'sum'}  # Funciones de agregación
+        )
+
+        # Renombrar las columnas para mayor claridad
+        pivot_table.rename(columns={'NIU': 'CONTEO_NIU', 'CONSUMO': 'SUMA_CONSUMO', 'FACTURACION CONSUMO': 'SUMA_FACTURACION'}, inplace=True)
+
+        # Crear un nuevo DataFrame con el resultado
+        informeDaneVf = pivot_table.reset_index()
+
+        # Mostrar tabla en Streamlit
+        st.write("### Tabla de informe DANE:")
+        st.dataframe(informeDaneVf)
+
     else:
         st.error("❌ No se encontraron todas las columnas necesarias en TC1. Verifica el archivo.")
 
