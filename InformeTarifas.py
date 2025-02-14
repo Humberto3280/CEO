@@ -219,9 +219,9 @@ if all(file_dict.values()):
 
         import numpy as np
         # Identificar filas con problemas en CONSUMO o FACTURACION CONSUMO
-        problemas = Tarifas4[
-            Tarifas4[['CONSUMO', 'FACTURACION CONSUMO']].isna().any(axis=1) |
-            Tarifas4[['CONSUMO', 'FACTURACION CONSUMO']].isin([np.inf, -np.inf]).any(axis=1)
+        problemas = Tarifas[
+            Tarifas[['CONSUMO', 'FACTURACION CONSUMO']].isna().any(axis=1) |
+            Tarifas[['CONSUMO', 'FACTURACION CONSUMO']].isin([np.inf, -np.inf]).any(axis=1)
         ]
 
         # Si hay problemas, mostrar los NIU afectados
@@ -231,8 +231,8 @@ if all(file_dict.values()):
             st.stop()
         else:
             # Si no hay problemas, proceder con la conversión
-            Tarifas4['CONSUMO'] = np.floor(Tarifas4['CONSUMO'] + 0.5).astype(int)
-            Tarifas4['FACTURACION CONSUMO'] = np.floor(Tarifas4['FACTURACION CONSUMO'] + 0.5).astype(int)
+            Tarifas['CONSUMO'] = np.floor(Tarifas['CONSUMO'] + 0.5).astype(int)
+            Tarifas['FACTURACION CONSUMO'] = np.floor(Tarifas['FACTURACION CONSUMO'] + 0.5).astype(int)
 
         # Validación de valores vacíos en la columna NIU
         if Tarifas['NIU'].eq('').any():
