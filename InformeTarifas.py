@@ -218,10 +218,21 @@ if all(file_dict.values()):
         Tarifas = Tarifas.drop(columns=['producto', 'Suma de consumo', 'Suma de facturacion consumo', 'tipo de tarifa'])
 
         import numpy as np
+        # Identificar filas con problemas en CONSUMO o FACTURACION CONSUMO
+        problemas = Tarifas4[
+            Tarifas4[['CONSUMO', 'FACTURACION CONSUMO']].isna().any(axis=1) |
+            Tarifas4[['CONSUMO', 'FACTURACION CONSUMO']].isin([np.inf, -np.inf]).any(axis=1)
+        ]
 
-        # Redondeo de las columnas Consumo y fact consumo
-        Tarifas['CONSUMO'] = np.floor(Tarifas['CONSUMO'] + 0.5).astype(int)
-        Tarifas['FACTURACION CONSUMO'] = np.floor(Tarifas['FACTURACION CONSUMO'] + 0.5).astype(int)
+        # Si hay problemas, mostrar los NIU afectados
+        if not problemas.empty:
+            st.error("⚠️ Atención: Se encontraron valores no válidos en las siguientes NIU:")
+            st.write(problemas[['NIU', 'CONSUMO', 'FACTURACION CONSUMO']])
+            st.stop()
+        else:
+            # Si no hay problemas, proceder con la conversión
+            Tarifas4['CONSUMO'] = np.floor(Tarifas4['CONSUMO'] + 0.5).astype(int)
+            Tarifas4['FACTURACION CONSUMO'] = np.floor(Tarifas4['FACTURACION CONSUMO'] + 0.5).astype(int)
 
         # Validación de valores vacíos en la columna NIU
         if Tarifas['NIU'].eq('').any():
