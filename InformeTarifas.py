@@ -273,12 +273,14 @@ if all(file_dict.values()):
 
         # Se añade el dataframe Tarifas al archivo base en la hoja de consolidado
         from openpyxl import load_workbook
-        tarifas_def = load_workbook(file_dict["INFORME_TARIFAS_DEF"], keep_vba = True)
+        file_dict["INFORME_TARIFAS_DEF"].seek(0)
+        tarifas_def = load_workbook(file_dict["INFORME_TARIFAS_DEF"], keep_vba=True)
         hoja_consolidado = tarifas_def["Consolidado"]
 
         #Eliminar data ya existente
         if hoja_consolidado.max_row > 1:
-            hoja_consolidado.delete_rows(2, hoja_consolidado -1)
+            hoja_consolidado.delete_rows(2, hoja_consolidado.max_row - 1)
+
         #convertir el dataframe en lista sin los encabezados
         data_df = Tarifas.values.tolist()
 
