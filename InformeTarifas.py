@@ -5,7 +5,7 @@ st.title("Generación de informes (tarifas e informe Dane)")
 
 # Subir archivos (un solo botón para todos)
 uploaded_files = st.file_uploader(
-    "Subir archivos (TC1.csv, TC2.xlsx, AP.xlsx, Divipola.xlsx, Bitacora.xlsx)", 
+    "Subir archivos (TC1.csv, TC2.xlsx, AP.xlsx, Divipola.xlsx, Bitacora.xlsx, Informe_Tarifas_def.xlsx)", 
     type=["csv", "xlsx"], 
     accept_multiple_files=True
 )
@@ -269,6 +269,21 @@ if all(file_dict.values()):
         else:
             st.success("✅ Validación exitosa: El DataFrame no tiene valores nulos.")
 
+        # Se añade el dataframe Tarifas al archivo base en la hoja de consolidado
+        from openpyxl import load_workbook
+        tarifas_def = load_workbook("Informe_Tarifas_Definitivo", keep_vba = True)
+        hoja_consolidado = tarifas_def["Consolidado"]
+
+        #Eliminar data ya existente
+        if hoja_consolidado.max_row > 1:
+            hoja_consolidado.delete_rows(2, hoja_consolidado -1)
+        #convertir el dataframe en lista sin los encabezados
+        data_df = Tarifas.values.tolist()
+
+        #Se escribe la nueva data sobre la hoja de consolidado
+        for row in data_df:
+            hoja_consolidado.append(row)
+
         # Validación Bitácora
         bitacora['Producto'] = bitacora['Producto'].astype(str)
         bitacora = bitacora[bitacora['Tipo Frontera'] == 'Tipo No Regulado']
@@ -326,10 +341,12 @@ if all(file_dict.values()):
             zip_buffer = io.BytesIO()
     
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                # Guardar Tarifas.csv
-                tarifas_buffer = io.StringIO()
-                Tarifas.to_csv(tarifas_buffer, index=False, encoding='utf-8-sig')
-                zip_file.writestr("Tarifas.csv", tarifas_buffer.getvalue())
+                # Guardar el workbook actualizado en un buffer binario
+                excel_buffer = io.BytesIO()
+                wb.save(excel_buffer)
+                excel_buffer.seek(0)
+                # Se añade el archivo Excel al ZIP con el nombre deseado
+                zip_file.writestr("TarifasDefinitivo.xlsx", excel_buffer.getvalue())
 
                 # Guardar Informe_DANE.csv
                 dane_buffer = io.StringIO()
