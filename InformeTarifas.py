@@ -345,7 +345,7 @@ if all(file_dict.values()):
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 # Guardar el workbook actualizado en un buffer binario
                 excel_buffer = io.BytesIO()
-                wb.save(excel_buffer)
+                tarifas_def.save(excel_buffer)
                 excel_buffer.seek(0)
                 # Se añade el archivo Excel al ZIP con el nombre deseado
                 zip_file.writestr("TarifasDefinitivo.xlsx", excel_buffer.getvalue())
