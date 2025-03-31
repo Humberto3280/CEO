@@ -11,7 +11,7 @@ uploaded_files = st.file_uploader(
 )
 
 # Diccionario para almacenar los archivos subidos
-file_dict = {"TC1": None, "TC2": None, "AP": None, "DIVIPOLA": None, "BITACORA": None, "TARIFAS_DEF": None}
+file_dict = {"TC1": None, "TC2": None, "AP": None, "DIVIPOLA": None, "BITACORA": None, "INFORME_TARIFAS_DEF": None}
 
 # Asociar cada archivo subido a su clave correspondiente
 for file in uploaded_files:
@@ -25,8 +25,8 @@ for file in uploaded_files:
         file_dict["DIVIPOLA"] = file
     elif "BITACORA" in file.name.upper():
         file_dict["BITACORA"] = file
-    elif "TARIFAS_DEF" in file.name.upper():
-        file_dict["TARIFAS_DEF"] = file
+    elif "INFORME_TARIFAS_DEF" in file.name.upper():
+        file_dict["INFORME_TARIFAS_DEF"] = file
 
 # Verificar si todos los archivos han sido cargados
 if all(file_dict.values()):
@@ -273,7 +273,7 @@ if all(file_dict.values()):
 
         # Se añade el dataframe Tarifas al archivo base en la hoja de consolidado
         from openpyxl import load_workbook
-        tarifas_def = load_workbook(file_dict["TARIFAS_DEF"], keep_vba = True)
+        tarifas_def = load_workbook(file_dict["INFORME_TARIFAS_DEF"], keep_vba = True)
         hoja_consolidado = tarifas_def["Consolidado"]
 
         #Eliminar data ya existente
