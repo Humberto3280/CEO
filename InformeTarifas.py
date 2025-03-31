@@ -276,7 +276,8 @@ if all(file_dict.values()):
         from io import BytesIO
         file_dict["INFORME_TARIFAS_DEF"].seek(0)
         contenido = file_dict["INFORME_TARIFAS_DEF"].read()
-        tarifas_def = load_workbook(BytesIO(contenido), keep_vba=True)
+        tarifas_def = load_workbook(BytesIO(contenido))  # sin keep_vba=True
+
 
         hoja_consolidado = tarifas_def["Consolidado"]
 
