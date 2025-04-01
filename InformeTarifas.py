@@ -1,5 +1,3 @@
-Me esta arrojando un error sobre los nui que están en ap y no estan en tarifas, lo cual no es cierto porque con el código anterior no me pasaba y me daba todo excelente, revisa bien el código que me diste:
-
 import pandas as pd
 import streamlit as st
 
