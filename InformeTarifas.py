@@ -320,34 +320,198 @@ if all(file_dict.values()):
         st.write("Descargar los informes")
         import io
         import zipfile
-
-        # Función para convertir DataFrame en CSV y agregarlo a un archivo ZIP
-        def create_zip():
+        import xlsxwriter
+        import pandas as pd
+        from typing import Any, Dict
+        
+        # Supongamos que ya tienes definidos Tarifas, informeDaneVf y diferencias en tu código.
+        
+        def generar_informes_excel_bytes(Tarifas: pd.DataFrame) -> bytes:
+        
+            output = io.BytesIO()
+            workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+            
+            # Crear las dos hojas
+            worksheet_consolidado = workbook.add_worksheet("Consolidado")
+            worksheet_informe = workbook.add_worksheet("Informe")
+            
+            # Definir formatos
+            header_format = workbook.add_format({
+                'bold': True,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'bg_color': '#D9D9D9'
+            })
+            text_format = workbook.add_format({
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1
+            })
+            num_format = workbook.add_format({
+                'num_format': '_(* #,##0_);_(* (#,##0);_(* "-"??_);_(@_)',
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1
+            })
+            
+            #############################
+            # Hoja "Consolidado"
+            #############################
+            # Escribir encabezados
+            for col_idx, col_name in enumerate(Tarifas.columns):
+                worksheet_consolidado.write(0, col_idx, col_name, header_format)
+            # Escribir filas del DataFrame
+            for row_idx, row_data in enumerate(Tarifas.values, start=1):
+                for col_idx, cell in enumerate(row_data):
+                    if isinstance(cell, (int, float)):
+                        worksheet_consolidado.write(row_idx, col_idx, cell, num_format)
+                    else:
+                        worksheet_consolidado.write(row_idx, col_idx, cell, text_format)
+            
+            #############################
+            # Hoja "Informe"
+            #############################
+            # Ajustar anchos de columnas
+            worksheet_informe.set_column('A:A', 20)  # Categoría / Estrato
+            worksheet_informe.set_column('B:D', 15)  # Bloque "Número de usuarios"
+            worksheet_informe.set_column('E:E', 15)  # Consumo
+            worksheet_informe.set_column('F:F', 20)  # Facturación consumo
+            
+            # Encabezado
+            worksheet_informe.write(0, 0, "", header_format)
+            worksheet_informe.merge_range(0, 1, 0, 3, "Número de usuarios", header_format)
+            worksheet_informe.write(0, 4, "Consumo", header_format)
+            worksheet_informe.write(0, 5, "Facturación consumo", header_format)
+            
+            row = 1  # Comenzamos en la fila 2 (índice 1)
+            
+            # Datos para "No regulados"
+            df_nr = Tarifas[Tarifas["TIPO TARIFA"] == "NR"]
+            no_regulados_niu = df_nr["NIU"].nunique()
+            no_regulados_consumo = df_nr["CONSUMO"].sum()
+            no_regulados_facturacion = df_nr["FACTURACION CONSUMO"].sum()
+            
+            worksheet_informe.write(row, 0, "No regulados", text_format)
+            worksheet_informe.merge_range(row, 1, row, 3, no_regulados_niu, num_format)
+            worksheet_informe.write(row, 4, no_regulados_consumo, num_format)
+            worksheet_informe.write(row, 5, no_regulados_facturacion, num_format)
+            row += 1
+            
+            # Datos para "Regulados"
+            df_r = Tarifas[Tarifas["TIPO TARIFA"] == "R"]
+            regulados_niu = df_r["NIU"].nunique()
+            regulados_consumo = df_r["CONSUMO"].sum()
+            regulados_facturacion = df_r["FACTURACION CONSUMO"].sum()
+            
+            worksheet_informe.write(row, 0, "Regulados", text_format)
+            worksheet_informe.merge_range(row, 1, row, 3, regulados_niu, num_format)
+            worksheet_informe.write(row, 4, regulados_consumo, num_format)
+            worksheet_informe.write(row, 5, regulados_facturacion, num_format)
+            row += 1
+        
+            # Función para escribir cada estrato (definida a continuación)
+            def escribir_estrato(
+                worksheet: xlsxwriter.workbook.Worksheet,
+                start_row: int,
+                categoria: str,
+                rural_usuarios: float,
+                urbano_usuarios: float,
+                total_usuarios: float,
+                consumo: float,
+                facturacion: float,
+                text_format: Any,
+                num_format: Any
+            ) -> int:
+                # Fusionar columna A para la categoría
+                worksheet.merge_range(start_row, 0, start_row+1, 0, categoria, text_format)
+                # Fila "Rural"
+                worksheet.write(start_row, 1, "Rural", text_format)
+                worksheet.write(start_row, 2, rural_usuarios, num_format)
+                worksheet.merge_range(start_row, 3, start_row+1, 3, total_usuarios, num_format)
+                worksheet.merge_range(start_row, 4, start_row+1, 4, consumo, num_format)
+                worksheet.merge_range(start_row, 5, start_row+1, 5, facturacion, num_format)
+                start_row += 1
+                # Fila "Urbano"
+                worksheet.write(start_row, 1, "Urbano", text_format)
+                worksheet.write(start_row, 2, urbano_usuarios, num_format)
+                start_row += 1
+                return start_row
+        
+            # Lista de estratos
+            estratos_info = [
+                {"categoria": "Estrato 1", "estrato": "1"},
+                {"categoria": "Estrato 2", "estrato": "2"},
+                {"categoria": "Estrato 3", "estrato": "3"},
+                {"categoria": "Estrato 4", "estrato": "4"},
+                {"categoria": "Estrato 5", "estrato": "5"},
+                {"categoria": "Estrato 6", "estrato": "6"},
+                {"categoria": "Alumbrado público", "estrato": "AP"},
+                {"categoria": "Comercial", "estrato": "C"},
+                {"categoria": "Industrial", "estrato": "I"},
+                {"categoria": "Oficial", "estrato": "O"}
+            ]
+            
+            # Para cada estrato se extraen las métricas y se escribe la sección
+            def obtener_metricas_estrato(df: pd.DataFrame, estrato_value: str) -> Dict[str, float]:
+                df_estrato = df[df["ESTRATO"] == estrato_value]
+                total_usuarios = df_estrato["NIU"].nunique()
+                consumo = df_estrato["CONSUMO"].sum()
+                facturacion = df_estrato["FACTURACION CONSUMO"].sum()
+                rural_usuarios = df_estrato[df_estrato["UBICACION"] == "R"]["NIU"].nunique()
+                urbano_usuarios = df_estrato[df_estrato["UBICACION"] == "U"]["NIU"].nunique()
+                return {
+                    "total_usuarios": total_usuarios,
+                    "consumo": consumo,
+                    "facturacion": facturacion,
+                    "rural_usuarios": rural_usuarios,
+                    "urbano_usuarios": urbano_usuarios
+                }
+            
+            for info in estratos_info:
+                metrics = obtener_metricas_estrato(df_r, info["estrato"])
+                row = escribir_estrato(
+                    worksheet_informe,
+                    start_row=row,
+                    categoria=info["categoria"],
+                    rural_usuarios=metrics["rural_usuarios"],
+                    urbano_usuarios=metrics["urbano_usuarios"],
+                    total_usuarios=metrics["total_usuarios"],
+                    consumo=metrics["consumo"],
+                    facturacion=metrics["facturacion"],
+                    text_format=text_format,
+                    num_format=num_format
+                )
+            
+            workbook.close()
+            output.seek(0)
+            return output.getvalue()
+        
+        def create_zip(Tarifas: pd.DataFrame, informeDaneVf: pd.DataFrame, diferencias: pd.DataFrame) -> io.BytesIO:
+        
             zip_buffer = io.BytesIO()
-    
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                # Guardar Tarifas.csv
-                tarifas_buffer = io.StringIO()
-                Tarifas.to_csv(tarifas_buffer, index=False, encoding='utf-8-sig')
-                zip_file.writestr("Tarifas.csv", tarifas_buffer.getvalue())
-
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:       
                 # Guardar Informe_DANE.csv
                 dane_buffer = io.StringIO()
                 informeDaneVf.to_csv(dane_buffer, index=False, encoding='utf-8-sig')
                 zip_file.writestr("Informe_DANE.csv", dane_buffer.getvalue())
-
+                
                 # Guardar Diferencias_Tarifas_Bitacora.csv
                 diferencias_buffer = io.StringIO()
                 diferencias.to_csv(diferencias_buffer, index=False, encoding='utf-8-sig')
                 zip_file.writestr("Diferencias_Tarifas_Bitacora.csv", diferencias_buffer.getvalue())
-
+                
+                # Generar y agregar el archivo Excel
+                excel_bytes = generar_informes_excel_bytes(Tarifas)
+                zip_file.writestr("Informe_Tarifas.xlsx", excel_bytes)
+            
             zip_buffer.seek(0)
             return zip_buffer
 
         # Botón para descargar los 3 archivos en un ZIP
         st.download_button(
             label="📥 Descargar Tarifas, Informe DANE y Diferencias",
-            data=create_zip(),
+            data=create_zip(Tarifas, informeDaneVf, diferencias),
             file_name="Reportes_Tarifas.zip",
             mime="application/zip"
         )
