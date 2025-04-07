@@ -488,7 +488,6 @@ if all(file_dict.values()):
             return output.getvalue()
         
         def create_zip(Tarifas: pd.DataFrame, informeDaneVf: pd.DataFrame, diferencias: pd.DataFrame) -> io.BytesIO:
-        
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:       
                 # Guardar Informe_DANE.csv
@@ -501,7 +500,7 @@ if all(file_dict.values()):
                 diferencias.to_csv(diferencias_buffer, index=False, encoding='utf-8-sig')
                 zip_file.writestr("Diferencias_Tarifas_Bitacora.csv", diferencias_buffer.getvalue())
                 
-                # Generar y agregar el archivo Excel
+                # Generar y agregar el archivo Excel (Informe_Tarifas.xlsx)
                 excel_bytes = generar_informes_excel_bytes(Tarifas)
                 zip_file.writestr("Informe_Tarifas.xlsx", excel_bytes)
             
