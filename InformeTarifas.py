@@ -314,7 +314,7 @@ if all(file_dict.values()):
         # Mostrar tabla en Streamlit
         st.write("### Tabla de informe DANE:")
         st.dataframe(informeDaneVf)
-
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
         #Descargar los archivos
         # Mostrar tabla en Streamlit
         st.write("Descargar los informes")
