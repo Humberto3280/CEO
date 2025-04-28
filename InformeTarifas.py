@@ -204,15 +204,19 @@ if all(file_dict.values()):
             st.stop()
         else:
             st.success("✅ Validación exitosa: La columna NIU no tiene valores vacíos.")
-
-        if (Tarifas['CONSUMO'] < 0).any():
+            
+        consum_neg = Tarifas[Tarifas['CONSUMO'] < 0]
+        if not consum_neg.empty:
             st.error("Error: La columna CONSUMO tiene valores negativos. Verifica los datos.")
+            st.write(consum_neg[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']])
             st.stop()
         else:
             st.success("✅ Validación exitosa: La columna CONSUMO no tiene valores negativos.")
 
-        if (Tarifas['FACTURACION CONSUMO'] < 0).any():
+        fact_neg = Tarifas[Tarifas['FACTURACION CONSUMO'] < 0]
+        if not fact_neg.empty:
             st.error("Error: La columna FACTURACION CONSUMO tiene valores negativos. Verifica los datos.")
+            st.write(fact_neg[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']])
             st.stop()
         else:
             st.success("✅ Validación exitosa: La columna FACTURACION CONSUMO no tiene valores negativos.")
@@ -225,11 +229,14 @@ if all(file_dict.values()):
         else:
             st.success("✅ Validación exitosa: No hay inconsistencias entre CONSUMO y FACTURACION CONSUMO.")
 
-        if Tarifas.isnull().any().any():
-            st.error("Error: El DataFrame contiene valores nulos. Verifica las columnas y corrige los datos.")
+        nulos = Tarifas[Tarifas.isnull().any(axis=1)]
+        if not nulos.empty:
+            st.error("Error: El DataFrame contiene valores nulos. Verifica las siguientes filas:")
+            st.write(nulos[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']])  # o muestra más columnas si quieres
             st.stop()
         else:
             st.success("✅ Validación exitosa: El DataFrame no tiene valores nulos.")
+
 
         bitacora['Producto'] = bitacora['Producto'].astype(str)
         bitacora = bitacora[bitacora['Tipo Frontera'] == 'Tipo No Regulado']
