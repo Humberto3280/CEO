@@ -220,7 +220,7 @@ if all(file_dict.values()):
         Consumo_dif_factu = Tarifas[(Tarifas['CONSUMO'] == 0) & (Tarifas['FACTURACION CONSUMO'] != 0)]
         if not Consumo_dif_factu.empty:
             st.error("Error: Si CONSUMO es 0, FACTURACION CONSUMO también debe ser 0. Hay inconsistencias en los siguientes NIU:")
-            st.write(Consumo_dif_factu['NIU'].tolist())  # Muestra la lista de NIU con problema
+            st.write(Consumo_dif_factu[['NIU', 'CONSUMO', 'FACTURACION CONSUMO']])
             st.stop()
         else:
             st.success("✅ Validación exitosa: No hay inconsistencias entre CONSUMO y FACTURACION CONSUMO.")
