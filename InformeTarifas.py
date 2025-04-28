@@ -66,15 +66,15 @@ if all(file_dict.values()):
             else:
                 st.error("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
             # Validar NIUs duplicados con diferentes tarifas
-            if 'Tipo de Tarifa' in tc2.columns:
+            if 'TIPO DE TARIFA' in tc2.columns:
                 duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
-                different_tarifas = duplicated_nius.groupby('NIU')['Tipo de Tarifa'].nunique()
+                different_tarifas = duplicated_nius.groupby('NIU')['TIPO DE TARIFA'].nunique()
                 nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
                 if not nius_with_different_tarifas.empty:
                     st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
                     niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
                     st.write("### NIUs con tipo de tarifa diferente:")
-                    st.dataframe(niu_different_tarifa_df[['NIU', 'Tipo de Tarifa']])
+                    st.dataframe(niu_different_tarifa_df[['NIU', 'TIPO DE TARIFA']])
                 else:
                     st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
         else:
@@ -122,9 +122,9 @@ if all(file_dict.values()):
                              'DIVIPOLA', 'Municipio', 'NIVEL DE TENSION',
                              'CARGA DE INVERSION', 'ZE']]
         Tarifas = Tarifas.rename(columns={
-            'Tipo de Tarifa': 'TIPO TARIFA',
-            'Consumo Usuario (kWh)': 'CONSUMO',
-            'Valor Facturación por Consumo Usuario': 'FACTURACION CONSUMO',
+            'TIPO DE TARIFA': 'TIPO TARIFA',
+            'CONSUMO USUARIO (KWH)': 'CONSUMO',
+            'VALOR FACTURACION POR CONSUMO USUARIO ()': 'FACTURACION CONSUMO',
             'Municipio': 'MUNICIPIO',
             'DIVIPOLA': 'DAVIPOLA'
         })
