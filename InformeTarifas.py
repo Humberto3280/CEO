@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import streamlit as st
 import io
 import zipfile
@@ -6,6 +7,9 @@ import xlsxwriter
 from typing import Any, Dict
 
 st.title("Generación de informes (tarifas e informe Dane)")
+
+#Lista para registrar los errores detectados
+errores_detectados = []
 
 # Subir archivos (un solo botón para todos)
 uploaded_files = st.file_uploader(
@@ -50,7 +54,7 @@ if all(file_dict.values()):
             count_nius_tc1 = tc1_filtrado[niu_col].nunique()
             st.write(f"Número de NIUs en TC1 después de filtrar: {count_nius_tc1}")
         else:
-            st.error("Las columnas esperadas no están en TC1.")
+            errores_detectados.append(("❌ Las columnas esperadas no están en TC1.", None))
 
         # **Validación de TC2 (NIUs y Tarifas)**
         if niu_col in tc2.columns:
@@ -64,21 +68,18 @@ if all(file_dict.values()):
             if count_nius_tc1 == count_nius_tc2 - 1:
                 st.success("✅ El número de NIUs en TC2 coincide con el valor esperado.")
             else:
-                st.error("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.")
+                errores_detectados.append(("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.", None))
             # Validar NIUs duplicados con diferentes tarifas
             if 'TIPO DE TARIFA' in tc2.columns:
                 duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
                 different_tarifas = duplicated_nius.groupby('NIU')['TIPO DE TARIFA'].nunique()
                 nius_with_different_tarifas = different_tarifas[different_tarifas > 1]
                 if not nius_with_different_tarifas.empty:
-                    st.error("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.")
                     niu_different_tarifa_df = duplicated_nius[duplicated_nius['NIU'].isin(nius_with_different_tarifas.index)]
-                    st.write("### NIUs con tipo de tarifa diferente:")
-                    st.dataframe(niu_different_tarifa_df[['NIU', 'TIPO DE TARIFA']])
+                    errores_detectados.append(("❌ Hay NIUs con diferentes tipos de tarifa. Revisa los datos.:",
+                                       niu_different_tarifa_df[['NIU', 'TIPO DE TARIFA']]))
                 else:
                     st.success("✅ Todos los NIUs tienen el mismo tipo de tarifa.")
-        else:
-            st.error("❌ Las columnas esperadas no están en TC2.")
 
     except Exception as e:
         st.error(f"Ocurrió un error al procesar los archivos: {e}")
@@ -128,7 +129,7 @@ if all(file_dict.values()):
             'Municipio': 'MUNICIPIO',
             'DIVIPOLA': 'DAVIPOLA'
         })
-        # Añadir Cliente de otro mercado
+        # ---------------------Añadir Cliente de otro mercado--------------------------
         niu_filtrado = tc2[(tc2['NIU'] == 898352932) | (tc2['NIU'] == 18124198)]
         consumo_usuario = niu_filtrado['CONSUMO USUARIO (KWH)'].values[0]
         valor_facturacion = niu_filtrado['VALOR FACTURACION POR CONSUMO USUARIO ()'].values[0]
@@ -151,13 +152,14 @@ if all(file_dict.values()):
         Tarifas['NIU'] = Tarifas['NIU'].astype(str).fillna('')
         Tarifas = Tarifas[~Tarifas['NIU'].str.contains('CAL')]
         
-        # Procesar archivo AP
+        #-------------------- Procesar archivo AP-----------------------------------
         ap['producto'] = ap['producto'].astype(str).str.strip()
         if ap['producto'].eq('').any():
-            st.error("❌ El archivo AP contiene productos vacíos. Por favor, corrige los datos.")
-            st.stop()
+            errores_detectados.append(("❌ El archivo AP contiene productos vacíos. Por favor, corrige los datos.", None))
         else:
             st.success("✅ Validación exitosa: No hay productos vacíos en el archivo AP.")
+            
+        #Reemplazar el tipo de tarifa con el sufijo correspondiente
         ap['tipo de tarifa'] = ap['tipo de tarifa'].replace({1: 'R', 2: 'NR'})
         ap['estrato'] = ap['estrato'].replace({11: 'AP'})
         ap = ap[ap['estrato'] == 'AP']
@@ -168,11 +170,13 @@ if all(file_dict.values()):
         niu_faltantes_en_ap = nius_tarifas_ap - nius_archivo_ap
         niu_faltantes_en_tarifas = nius_archivo_ap - nius_tarifas_ap
         if niu_faltantes_en_ap:
-            st.error(f"❌ NIU en Tarifas (AP) que no están en archivo AP: {niu_faltantes_en_ap}")
-            st.stop()
+            errores_detectados.append(("❌ NIU en Tarifas (AP) que no están en archivo AP:", 
+                pd.DataFrame({'NIU faltante en AP': list(niu_faltantes_en_ap)})
+            ))
         if niu_faltantes_en_tarifas:
-            st.error(f"❌ NIU en archivo AP (AP) que no están en Tarifas: {niu_faltantes_en_tarifas}")
-            st.stop()
+            errores_detectados.append(("❌ NIU en archivo AP (AP) que no están en Tarifas:", 
+                pd.DataFrame({'NIU faltante en AP': list(niu_faltantes_en_tarifas)})
+            ))
         if not niu_faltantes_en_ap and not niu_faltantes_en_tarifas:
             st.success("✅ Validación exitosa: se puede hacer cruce de AP con tarifas.")
 
@@ -186,54 +190,54 @@ if all(file_dict.values()):
         Tarifas.loc[Tarifas['tipo de tarifa'].notna(), 'TIPO TARIFA'] = Tarifas['tipo de tarifa']
         Tarifas = Tarifas.drop(columns=['producto', 'Suma de consumo', 'Suma de facturacion consumo', 'tipo de tarifa'])
 
-        import numpy as np
+        #--------------------------------Validaciones finales-----------------------------
+
+        #Se detectan valores no validos (nulos) en consumo y facturación.
         problemas = Tarifas[
             Tarifas[['CONSUMO', 'FACTURACION CONSUMO']].isna().any(axis=1) |
             Tarifas[['CONSUMO', 'FACTURACION CONSUMO']].isin([np.inf, -np.inf]).any(axis=1)
         ]
         if not problemas.empty:
-            st.error("⚠️ Atención: Se encontraron valores no válidos en las siguientes NIU:")
-            st.write(problemas[['NIU', 'CONSUMO', 'FACTURACION CONSUMO']])
-            st.stop()
+            errores_detectados.append(("❌ Atención: Se encontraron valores no válidos en las siguientes NIU:",
+                                       problemas[['NIU', 'CONSUMO', 'FACTURACION CONSUMO']]))
         else:
             Tarifas['CONSUMO'] = np.floor(Tarifas['CONSUMO'] + 0.5).astype(int)
             Tarifas['FACTURACION CONSUMO'] = np.floor(Tarifas['FACTURACION CONSUMO'] + 0.5).astype(int)
 
+        #Detectar si hay nulos en la columna NIU
         if Tarifas['NIU'].eq('').any():
-            st.error("Error: La columna NIU tiene valores vacíos. Revisar los archivos TC1 y TC2.")
-            st.stop()
+            st.error("⚠️Error: La columna NIU tiene valores vacíos. Revisar los archivos TC1 y TC2.")
         else:
             st.success("✅ Validación exitosa: La columna NIU no tiene valores vacíos.")
             
+        #Detectar si hay consumos negativos
         consum_neg = Tarifas[Tarifas['CONSUMO'] < 0]
         if not consum_neg.empty:
-            st.error("Error: La columna CONSUMO tiene valores negativos. Verifica los datos.")
-            st.write(consum_neg[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']])
-            st.stop()
+            errores_detectados.append(("❌Error: La columna CONSUMO tiene valores negativos. Verifica los datos.",
+                                       consum_neg[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']]))
         else:
             st.success("✅ Validación exitosa: La columna CONSUMO no tiene valores negativos.")
 
+        #Detectar si hay facturación negativa
         fact_neg = Tarifas[Tarifas['FACTURACION CONSUMO'] < 0]
         if not fact_neg.empty:
-            st.error("Error: La columna FACTURACION CONSUMO tiene valores negativos. Verifica los datos.")
-            st.write(fact_neg[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']])
-            st.stop()
+            errores_detectados.append(("❌Error: La columna FACTURACION CONSUMO tiene valores negativos. Verifica los datos.",
+                                       fact_neg[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']]))
         else:
             st.success("✅ Validación exitosa: La columna FACTURACION CONSUMO no tiene valores negativos.")
         # Detectar las filas donde hay problema
         Consumo_dif_factu = Tarifas[(Tarifas['CONSUMO'] == 0) & (Tarifas['FACTURACION CONSUMO'] != 0)]
         if not Consumo_dif_factu.empty:
-            st.error("Error: Si CONSUMO es 0, FACTURACION CONSUMO también debe ser 0. Hay inconsistencias en los siguientes NIU:")
-            st.write(Consumo_dif_factu[['NIU', 'CONSUMO', 'FACTURACION CONSUMO','ESTRATO']])
-            st.stop()
+            errores_detectados.append(("❌Error: Si CONSUMO es 0, FACTURACION CONSUMO también debe ser 0. Hay inconsistencias en los siguientes NIU:",
+                                       Consumo_dif_factu[['NIU', 'CONSUMO', 'FACTURACION CONSUMO','ESTRATO']]))
         else:
             st.success("✅ Validación exitosa: No hay inconsistencias entre CONSUMO y FACTURACION CONSUMO.")
 
+        #Detectar si hay valores nulos en tarifas
         nulos = Tarifas[Tarifas.isnull().any(axis=1)]
         if not nulos.empty:
-            st.error("Error: El DataFrame contiene valores nulos. Verifica las siguientes filas:")
-            st.write(nulos[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']])  # o muestra más columnas si quieres
-            st.stop()
+            errores_detectados.append(("❌Error: El DataFrame contiene valores nulos. Verifica las siguientes filas:",
+                                       nulos[['NIU', 'CONSUMO', 'FACTURACION CONSUMO', 'ESTRATO']]))
         else:
             st.success("✅ Validación exitosa: El DataFrame no tiene valores nulos.")
 
@@ -250,10 +254,6 @@ if all(file_dict.values()):
         resultado['Diferencia'] = abs(resultado[ultima_columna_bitacora] - resultado['CONSUMO'])
         resultado['Es Diferente'] = resultado['Diferencia'] > 1
         diferencias = resultado[resultado['Es Diferente']][['NIU', 'CONSUMO', ultima_columna_bitacora]]
-        st.write("### Tabla de diferencias tarifas con bitacora:")
-        st.dataframe(diferencias)
-        st.write("### Tabla de Tarifas Generada:")
-        st.dataframe(Tarifas)
 
         # Creación de informe DANE
         informeDane = Tarifas[(Tarifas['UBICACION'] == 'U') & (Tarifas['MUNICIPIO'] == 'POPAYAN')]
@@ -264,11 +264,27 @@ if all(file_dict.values()):
         )
         pivot_table.rename(columns={'NIU': 'CONTEO_NIU', 'CONSUMO': 'SUMA_CONSUMO', 'FACTURACION CONSUMO': 'SUMA_FACTURACION'}, inplace=True)
         informeDaneVf = pivot_table.reset_index()
+
+        #------------------------------Mostrar errores---------------------------
+        if errores_detectados:
+            st.error("Se encontraron los siguientes errores:")
+            for msg, df in errores_detectados:
+                st.markdown(f"- {msg}")
+                if df is not None:
+                    st.dataframe(df)
+        else:
+            st.success("✅ Todas las validaciones pasaron correctamente.")
+
+        # --------------------------Mostrar  tablas en página---------------------
+        st.write("### Tabla de diferencias tarifas con bitacora:")
+        st.dataframe(diferencias)
+        st.write("### Tabla de Tarifas Generada:")
+        st.dataframe(Tarifas)
         st.write("### Tabla de informe DANE:")
         st.dataframe(informeDaneVf)
         Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
 
-        # Descargar los archivos
+        # ------------------------------Descargar los archivos---------------------
         st.write("Descargar los informes")
         def generar_informes_excel_bytes(Tarifas: pd.DataFrame) -> bytes:
             output = io.BytesIO()
