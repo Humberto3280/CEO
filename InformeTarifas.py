@@ -104,9 +104,9 @@ if all(file_dict.values()):
         Tarifas = Tarifas.drop(columns=['Código DIVIPOLA'])
 
         # Crear tabla dinámica a partir de TC2
-        pivot_table = pd.pivot_table(tc2, index='NIU', values=['CONSUMO USUARIO (KWH)', 'VALOR FACTURACION POR CONSUMO USUARIO ()'], aggfunc='sum')
+        pivot_table = pd.pivot_table(tc2, index='NIU', values=['CONSUMO USUARIO (KWH)', 'VALOR FACTURACION POR CONSUMO USUARIO ($)'], aggfunc='sum')
         pivot_table.reset_index(inplace=True)
-        tblDinamicaTc2 = pivot_table[['NIU', 'CONSUMO USUARIO (KWH)', 'VALOR FACTURACION POR CONSUMO USUARIO ()']]
+        tblDinamicaTc2 = pivot_table[['NIU', 'CONSUMO USUARIO (KWH)', 'VALOR FACTURACION POR CONSUMO USUARIO ($)']]
 
         # Convertir columnas NIU a string y limpiar espacios
         Tarifas['NIU'] = Tarifas['NIU'].astype(str).str.strip()
@@ -119,20 +119,20 @@ if all(file_dict.values()):
         Tarifas['TIPO DE TARIFA'] = Tarifas['TIPO DE TARIFA'].replace({1: 'R', 2: 'NR'})
         
         Tarifas = Tarifas[['NIU', 'ESTRATO', 'TIPO DE TARIFA', 'CONSUMO USUARIO (KWH)',
-                             'VALOR FACTURACION POR CONSUMO USUARIO ()', 'UBICACION',
+                             'VALOR FACTURACION POR CONSUMO USUARIO ($)', 'UBICACION',
                              'DIVIPOLA', 'Municipio', 'NIVEL DE TENSION',
                              'CARGA DE INVERSION', 'ZE']]
         Tarifas = Tarifas.rename(columns={
             'TIPO DE TARIFA': 'TIPO TARIFA',
             'CONSUMO USUARIO (KWH)': 'CONSUMO',
-            'VALOR FACTURACION POR CONSUMO USUARIO ()': 'FACTURACION CONSUMO',
+            'VALOR FACTURACION POR CONSUMO USUARIO ($)': 'FACTURACION CONSUMO',
             'Municipio': 'MUNICIPIO',
             'DIVIPOLA': 'DAVIPOLA'
         })
         # ---------------------Añadir Cliente de otro mercado--------------------------
         niu_filtrado = tc2[(tc2['NIU'] == 898352932) | (tc2['NIU'] == 18124198)]
         consumo_usuario = niu_filtrado['CONSUMO USUARIO (KWH)'].values[0]
-        valor_facturacion = niu_filtrado['VALOR FACTURACION POR CONSUMO USUARIO ()'].values[0]
+        valor_facturacion = niu_filtrado['VALOR FACTURACION POR CONSUMO USUARIO ($)'].values[0]
         nueva_fila = pd.DataFrame({
             'NIU': [898352932],
             'ESTRATO': ['I'],
