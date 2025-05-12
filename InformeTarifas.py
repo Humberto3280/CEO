@@ -69,6 +69,32 @@ if all(file_dict.values()):
                 st.success("✅ El número de NIUs en TC2 coincide con el valor esperado.")
             else:
                 errores_detectados.append(("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.", None))
+
+            #Validar si faltan en TC1 o TC2
+            # Conjuntos de NIUs después de limpiar y filtrar
+            set_tc1 = set(tc1_filtrado['NIU'].astype(str).str.strip())
+            set_tc2 = set(tc2_sin_duplicados['NIU'].astype(str).str.strip())
+            
+            # Detectar faltantes y extra
+            faltan_en_tc2 = sorted(set_tc1 - set_tc2)
+            sobran_en_tc2 = sorted(set_tc2 - set_tc1)
+            
+            # Reporte de coincidencia
+            if not faltan_en_tc2 and not sobran_en_tc2:
+                st.success("✅ Los NIUs de TC1 y TC2 coinciden perfectamente.")
+            else:
+                if faltan_en_tc2:
+                    df_faltantes = pd.DataFrame({'NIU faltantes en TC2': faltan_en_tc2})
+                    errores_detectados.append((
+                        "❌ NIUs presentes en TC1 que NO aparecen en TC2:",
+                        df_faltantes
+                    ))
+                if sobran_en_tc2:
+                    df_sobran = pd.DataFrame({'NIU extra en TC2': sobran_en_tc2})
+                    errores_detectados.append((
+                        "❌ NIUs presentes en TC2 que NO aparecen en TC1:",
+                        df_sobran
+                    ))
             # Validar NIUs duplicados con diferentes tarifas
             if 'TIPO DE TARIFA' in tc2.columns:
                 duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
