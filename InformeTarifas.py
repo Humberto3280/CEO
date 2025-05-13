@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
+import re
 import io
 import zipfile
 import xlsxwriter
@@ -70,31 +71,50 @@ if all(file_dict.values()):
             else:
                 errores_detectados.append(("❌ El número de NIUs en TC2 no coincide con el valor esperado. Verifica los archivos.", None))
 
-            #Validar si faltan en TC1 o TC2
-            # Conjuntos de NIUs después de limpiar y filtrar
-            set_tc1 = set(tc1_filtrado['NIU'].astype(str).str.strip())
-            set_tc2 = set(tc2_sin_duplicados['NIU'].astype(str).str.strip())
-            
-            # Detectar faltantes y extra
-            faltan_en_tc2 = sorted(set_tc1 - set_tc2)
-            sobran_en_tc2 = sorted(set_tc2 - set_tc1)
-            
-            # Reporte de coincidencia
-            if not faltan_en_tc2 and not sobran_en_tc2:
-                st.success("✅ Los NIUs de TC1 y TC2 coinciden perfectamente.")
-            else:
-                if faltan_en_tc2:
-                    df_faltantes = pd.DataFrame({'NIU faltantes en TC2': faltan_en_tc2})
-                    errores_detectados.append((
-                        "❌ NIUs presentes en TC1 que NO aparecen en TC2:",
-                        df_faltantes
-                    ))
-                if sobran_en_tc2:
-                    df_sobran = pd.DataFrame({'NIU extra en TC2': sobran_en_tc2})
-                    errores_detectados.append((
-                        "❌ NIUs presentes en TC2 que NO aparecen en TC1:",
-                        df_sobran
-                    ))
+        #------------------------------Validar si faltan en TC1 o TC2--------------------------------------------------
+        
+        # Función para extraer sólo los dígitos de una cadena
+        def normalize_niu(x: str) -> str:
+            nums = re.sub(r"\D", "", x or "")
+            return nums
+        
+        # Antes de crear los sets, aplica la normalización
+        tc1_filtrado['NIU_norm'] = tc1_filtrado['NIU'].astype(str).str.strip().apply(normalize_niu)
+        tc2_sin_duplicados['NIU_norm'] = tc2_sin_duplicados['NIU'].astype(str).str.strip().apply(normalize_niu)
+        
+        # Ahora crea los sets sobre la columna normalizada
+        set_tc1 = set(tc1_filtrado['NIU_norm'])
+        set_tc2 = set(tc2_sin_duplicados['NIU_norm'])
+        
+        faltan_en_tc2 = sorted(set_tc1 - set_tc2)
+        sobran_en_tc2 = sorted(set_tc2 - set_tc1)
+        
+        # Para mostrar los valores originales que no matchean,
+        # puedes mapear de vuelta desde la tabla original
+        if faltan_en_tc2:
+            orig_faltantes = (tc1_filtrado[tc1_filtrado['NIU_norm'].isin(faltan_en_tc2)]
+                              [['NIU_norm', 'NIU']]
+                              .drop_duplicates()
+                              .rename(columns={'NIU': 'NIU_original_TC1'}))
+            errores_detectados.append((
+                "❌ NIUs en TC1 (normalizados) que no aparecen en TC2:",
+                orig_faltantes
+            ))
+        
+        if sobran_en_tc2:
+            orig_sobran = (tc2_sin_duplicados[tc2_sin_duplicados['NIU_norm'].isin(sobran_en_tc2)]
+                           [['NIU_norm', 'NIU']]
+                           .drop_duplicates()
+                           .rename(columns={'NIU': 'NIU_original_TC2'}))
+            errores_detectados.append((
+                "❌ NIUs en TC2 (normalizados) que no aparecen en TC1:",
+                orig_sobran
+            ))
+        
+        # Mensaje de éxito si todo cuadra
+        if not faltan_en_tc2 and not sobran_en_tc2:
+            st.success("✅ Los NIUs de TC1 y TC2 coinciden perfectamente tras normalizar.")
+
             # Validar NIUs duplicados con diferentes tarifas
             if 'TIPO DE TARIFA' in tc2.columns:
                 duplicated_nius = tc2[tc2.duplicated(subset='NIU', keep=False)]
@@ -110,7 +130,7 @@ if all(file_dict.values()):
     except Exception as e:
         st.error(f"Ocurrió un error al procesar los archivos: {e}")
 
-    # **Generación de Tabla de Tarifas**
+    # --------------------------Generación de Tabla de Tarifas---------------------------------------------------------
     required_columns = ['NIU', 'ESTRATO', 'CODIGO DANE (NIU)', 'UBICACION', 
                         'NIVEL DE TENSION', 'PORCENTAJE PROPIEDAD DEL ACTIVO', 'CODIGO AREA ESPECIAL']
 
