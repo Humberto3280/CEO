@@ -81,6 +81,20 @@ if all(file_dict.values()):
         # Antes de crear los sets, aplica la normalización
         tc1_filtrado['NIU_norm'] = tc1_filtrado['NIU'].astype(str).str.strip().apply(normalize_niu)
         tc2_sin_duplicados['NIU_norm'] = tc2_sin_duplicados['NIU'].astype(str).str.strip().apply(normalize_niu)
+        # Buscar duplicados
+        duplicados_tc1 = tc1_filtrado[tc1_filtrado.duplicated(subset='NIU_norm', keep=False)]
+        
+        if not duplicados_tc1.empty:
+            # Construir un DataFrame con los valores originales y normalizados
+            df_dup = (duplicados_tc1[['NIU_norm', 'NIU']]
+                      .drop_duplicates()
+                      .rename(columns={'NIU': 'NIU_original'}))
+            errores_detectados.append((
+                "❌ NIUs duplicados encontrados en TC1:",
+                df_dup
+            ))
+        else:
+            st.success("✅ No hay NIUs duplicados en TC1.")
         
         # Ahora crea los sets sobre la columna normalizada
         set_tc1 = set(tc1_filtrado['NIU_norm'])
