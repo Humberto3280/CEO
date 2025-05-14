@@ -12,29 +12,32 @@ st.title("Generación de informes (tarifas e informe Dane)")
 #Lista para registrar los errores detectados
 errores_detectados = []
 
-# Subir archivos (un solo botón para todos)
+#Sube los archivos
 uploaded_files = st.file_uploader(
     "Subir archivos (TC1.csv, TC2.xlsx, AP.xlsx, Divipola.xlsx, Bitacora.xlsx)", 
     type=["csv", "xlsx"], 
     accept_multiple_files=True
 )
 
-# Diccionario para almacenar los archivos subidos
-file_dict = {"TC1": None, "TC2": None, "AP": None, "DIVIPOLA": None, "BITACORA": None}
+#Patrones regex para cada clave
+pattern_map = {
+    "TC1":    re.compile(r'(?i)(?:^|[\s_\-\.])TC1(?:$|[\s_\-\.])'),
+    "TC2":    re.compile(r'(?i)(?:^|[\s_\-\.])TC2(?:$|[\s_\-\.])'),
+    "AP":     re.compile(r'(?i)(?:^|[\s_\-\.])AP(?:$|[\s_\-\.])'),
+    "DIVIPOLA": re.compile(r'(?i)(?:^|[\s_\-\.])DIVIPOLA(?:$|[\s_\-\.])'),
+    "BITACORA": re.compile(r'(?i)(?:^|[\s_\-\.])BITACORA(?:$|[\s_\-\.])'),
+}
 
-# Asociar cada archivo subido a su clave correspondiente
-for file in uploaded_files:
-    if "TC1" in file.name.upper():
-        file_dict["TC1"] = file
-    elif "TC2" in file.name.upper():
-        file_dict["TC2"] = file
-    elif "AP" in file.name.upper():
-        file_dict["AP"] = file
-    elif "DIVIPOLA" in file.name.upper():
-        file_dict["DIVIPOLA"] = file
-    elif "BITACORA" in file.name.upper():
-        file_dict["BITACORA"] = file
+#Inicializa file_dict a partir de los patrones
+file_dict = {key: None for key in pattern_map}
 
+#Asocia cada archivo subido según el regex que case
+for f in uploaded_files:
+    for key, pat in pattern_map.items():
+        if pat.search(f.name):
+            file_dict[key] = f
+            break
+            
 # Verificar si todos los archivos han sido cargados
 if all(file_dict.values()):
     try:
