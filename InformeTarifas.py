@@ -120,11 +120,11 @@ if all(file_dict.values()):
         
         if sobran_en_tc2:
             orig_sobran = (tc2_sin_duplicados[tc2_sin_duplicados['NIU_norm'].isin(sobran_en_tc2)]
-                           [['NIU_norm', 'NIU']]
+                           [['NIU']]
                            .drop_duplicates()
-                           .rename(columns={'NIU': 'NIU_original_TC2'}))
+                           .rename(columns={'NIU': 'NIU_TC2'}))
             errores_detectados.append((
-                "❌ NIUs en TC2 (normalizados) que no aparecen en TC1:",
+                "❌ NIUs en TC2 que no aparecen en TC1:",
                 orig_sobran
             ))
         
@@ -233,11 +233,11 @@ if all(file_dict.values()):
         niu_faltantes_en_ap = nius_tarifas_ap - nius_archivo_ap
         niu_faltantes_en_tarifas = nius_archivo_ap - nius_tarifas_ap
         if niu_faltantes_en_ap:
-            errores_detectados.append(("❌ NIU en Tarifas (AP) que no están en archivo AP:", 
+            errores_detectados.append(("❌ NIU en Tarifas que no están en archivo AP:", 
                 pd.DataFrame({'NIU faltante en AP': list(niu_faltantes_en_ap)})
             ))
         if niu_faltantes_en_tarifas:
-            errores_detectados.append(("❌ NIU en archivo AP (AP) que no están en Tarifas:", 
+            errores_detectados.append(("❌ NIU en archivo AP que no están en Tarifas:", 
                 pd.DataFrame({'NIU faltante en AP': list(niu_faltantes_en_tarifas)})
             ))
         if not niu_faltantes_en_ap and not niu_faltantes_en_tarifas:
