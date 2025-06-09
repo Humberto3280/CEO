@@ -110,11 +110,11 @@ if all(file_dict.values()):
         # puedes mapear de vuelta desde la tabla original
         if faltan_en_tc2:
             orig_faltantes = (tc1_filtrado[tc1_filtrado['NIU_norm'].isin(faltan_en_tc2)]
-                              [['NIU_norm', 'NIU']]
+                              [['NIU']]
                               .drop_duplicates()
-                              .rename(columns={'NIU': 'NIU_original_TC1'}))
+                              .rename(columns={'NIU': 'NIU_TC1'}))
             errores_detectados.append((
-                "❌ NIUs en TC1 (normalizados) que no aparecen en TC2:",
+                "❌ NIUs en TC1 que no aparecen en TC2:",
                 orig_faltantes
             ))
         
