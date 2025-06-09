@@ -261,7 +261,7 @@ if all(file_dict.values()):
             Tarifas[['CONSUMO', 'FACTURACION CONSUMO']].isin([np.inf, -np.inf]).any(axis=1)
         ]
         if not problemas.empty:
-            errores_detectados.append(("❌ Atención: Se encontraron NIU que no estan en TC2:",
+            errores_detectados.append(("❌ Atención: Se encontraron NIU (no estan en TC2) que tienen valores nulos en consumo y facturación:",
                                        problemas[['NIU', 'CONSUMO', 'FACTURACION CONSUMO']]))
         else:
             Tarifas['CONSUMO'] = np.floor(Tarifas['CONSUMO'] + 0.5).astype(int)
