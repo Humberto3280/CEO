@@ -327,7 +327,7 @@ if all(file_dict.values()):
         )
         pivot_table.rename(columns={'NIU': 'CONTEO_NIU', 'CONSUMO': 'SUMA_CONSUMO', 'FACTURACION CONSUMO': 'SUMA_FACTURACION'}, inplace=True)
         informeDaneVf = pivot_table.reset_index()
-
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
         #------------------------------Mostrar errores---------------------------
         if errores_detectados:
             st.error("Se encontraron los siguientes errores:")
@@ -342,10 +342,14 @@ if all(file_dict.values()):
         st.write("### Tabla de diferencias tarifas con bitacora:")
         st.dataframe(diferencias)
         st.write("### Tabla de Tarifas Generada:")
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
+        Tarifas['TIPO TARIFA'] = Tarifas['TIPO TARIFA'].astype(str)
+        Tarifas['UBICACION'] = Tarifas['UBICACION'].astype(str)
+        Tarifas['DAVIPOLA'] = Tarifas['DAVIPOLA'].astype(str)
+        Tarifas['NIU'] = Tarifas['NIU'].astype(str)
         st.dataframe(Tarifas)
         st.write("### Tabla de informe DANE:")
         st.dataframe(informeDaneVf)
-        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
 
         # ------------------------------Descargar los archivos---------------------
         st.write("Descargar los informes")
