@@ -156,7 +156,7 @@ if all(file_dict.values()):
         Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
 
         # Modificar valores en columnas
-        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'}).astype(str)
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
         Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
         Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
         # Combinar con divipola para traer nombre de municipio
@@ -179,7 +179,7 @@ if all(file_dict.values()):
         # Añadir 'Tipo de Tarifa'
         tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'TIPO DE TARIFA']], on='NIU', how='left')
         Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
-        Tarifas['TIPO DE TARIFA'] = Tarifas['TIPO DE TARIFA'].replace({1: 'R', 2: 'NR'}).astype(str)
+        Tarifas['TIPO DE TARIFA'] = Tarifas['TIPO DE TARIFA'].replace({1: 'R', 2: 'NR'})
         
         Tarifas = Tarifas[['NIU', 'ESTRATO', 'TIPO DE TARIFA', 'CONSUMO USUARIO (KWH)',
                              'VALOR FACTURACION POR CONSUMO USUARIO ($)', 'UBICACION',
@@ -224,7 +224,7 @@ if all(file_dict.values()):
             
         #Reemplazar el tipo de tarifa con el sufijo correspondiente
         ap['tipo de tarifa'] = ap['tipo de tarifa'].replace({1: 'R', 2: 'NR'})
-        ap['estrato'] = ap['estrato'].replace({11: 'AP'}).astype(str)
+        ap['estrato'] = ap['estrato'].replace({11: 'AP'})
         ap = ap[ap['estrato'] == 'AP']
 
         tarifas_val = Tarifas[Tarifas['ESTRATO'] == 'AP']
@@ -261,7 +261,7 @@ if all(file_dict.values()):
             Tarifas[['CONSUMO', 'FACTURACION CONSUMO']].isin([np.inf, -np.inf]).any(axis=1)
         ]
         if not problemas.empty:
-            errores_detectados.append(("❌ Atención: Se encontraron NIU (no estan en TC2) que tienen valores nulos en consumo y facturación:",
+            errores_detectados.append(("❌ Atención: Se encontraron NIU que no estan en TC2:",
                                        problemas[['NIU', 'CONSUMO', 'FACTURACION CONSUMO']]))
         else:
             Tarifas['CONSUMO'] = np.floor(Tarifas['CONSUMO'] + 0.5).astype(int)
@@ -327,13 +327,7 @@ if all(file_dict.values()):
         )
         pivot_table.rename(columns={'NIU': 'CONTEO_NIU', 'CONSUMO': 'SUMA_CONSUMO', 'FACTURACION CONSUMO': 'SUMA_FACTURACION'}, inplace=True)
         informeDaneVf = pivot_table.reset_index()
-        # 🔐 Conversión de columnas clave a string para evitar errores de pyarrow
-        columnas_objetivo = ['NIU', 'ESTRATO', 'TIPO TARIFA', 'UBICACION', 'DAVIPOLA']
-        Tarifas[columnas_objetivo] = Tarifas[columnas_objetivo].astype(str)
-        
-        # También para informeDaneVf si contiene columnas tipo 'ESTRATO'
-        if 'ESTRATO' in informeDaneVf.columns:
-            informeDaneVf['ESTRATO'] = informeDaneVf['ESTRATO'].astype(str)
+
         #------------------------------Mostrar errores---------------------------
         if errores_detectados:
             st.error("Se encontraron los siguientes errores:")
@@ -348,14 +342,10 @@ if all(file_dict.values()):
         st.write("### Tabla de diferencias tarifas con bitacora:")
         st.dataframe(diferencias)
         st.write("### Tabla de Tarifas Generada:")
-        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
-        Tarifas['TIPO TARIFA'] = Tarifas['TIPO TARIFA'].astype(str)
-        Tarifas['UBICACION'] = Tarifas['UBICACION'].astype(str)
-        Tarifas['DAVIPOLA'] = Tarifas['DAVIPOLA'].astype(str)
-        Tarifas['NIU'] = Tarifas['NIU'].astype(str)
         st.dataframe(Tarifas)
         st.write("### Tabla de informe DANE:")
         st.dataframe(informeDaneVf)
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
 
         # ------------------------------Descargar los archivos---------------------
         st.write("Descargar los informes")
