@@ -327,7 +327,13 @@ if all(file_dict.values()):
         )
         pivot_table.rename(columns={'NIU': 'CONTEO_NIU', 'CONSUMO': 'SUMA_CONSUMO', 'FACTURACION CONSUMO': 'SUMA_FACTURACION'}, inplace=True)
         informeDaneVf = pivot_table.reset_index()
-        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].astype(str)
+        # 🔐 Conversión de columnas clave a string para evitar errores de pyarrow
+        columnas_objetivo = ['NIU', 'ESTRATO', 'TIPO TARIFA', 'UBICACION', 'DAVIPOLA']
+        Tarifas[columnas_objetivo] = Tarifas[columnas_objetivo].astype(str)
+        
+        # También para informeDaneVf si contiene columnas tipo 'ESTRATO'
+        if 'ESTRATO' in informeDaneVf.columns:
+            informeDaneVf['ESTRATO'] = informeDaneVf['ESTRATO'].astype(str)
         #------------------------------Mostrar errores---------------------------
         if errores_detectados:
             st.error("Se encontraron los siguientes errores:")
