@@ -156,7 +156,7 @@ if all(file_dict.values()):
         Tarifas.columns = ['NIU', 'ESTRATO', 'DIVIPOLA', 'UBICACION', 'NIVEL DE TENSION', 'CARGA DE INVERSION', 'ZE']
 
         # Modificar valores en columnas
-        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'})
+        Tarifas['ESTRATO'] = Tarifas['ESTRATO'].replace({7: 'I', 8: 'C', 9: 'O', 11: 'AP'}).astype(str)
         Tarifas['UBICACION'] = Tarifas['UBICACION'].replace({1: 'R', 2: 'U'})
         Tarifas['CARGA DE INVERSION'] = Tarifas['CARGA DE INVERSION'].replace({101: 0})
         # Combinar con divipola para traer nombre de municipio
@@ -179,7 +179,7 @@ if all(file_dict.values()):
         # Añadir 'Tipo de Tarifa'
         tblDinamicaTc2 = tblDinamicaTc2.merge(tc2_sin_duplicados[['NIU', 'TIPO DE TARIFA']], on='NIU', how='left')
         Tarifas = Tarifas.merge(tblDinamicaTc2, on='NIU', how='left')
-        Tarifas['TIPO DE TARIFA'] = Tarifas['TIPO DE TARIFA'].replace({1: 'R', 2: 'NR'})
+        Tarifas['TIPO DE TARIFA'] = Tarifas['TIPO DE TARIFA'].replace({1: 'R', 2: 'NR'}).astype(str)
         
         Tarifas = Tarifas[['NIU', 'ESTRATO', 'TIPO DE TARIFA', 'CONSUMO USUARIO (KWH)',
                              'VALOR FACTURACION POR CONSUMO USUARIO ($)', 'UBICACION',
@@ -224,7 +224,7 @@ if all(file_dict.values()):
             
         #Reemplazar el tipo de tarifa con el sufijo correspondiente
         ap['tipo de tarifa'] = ap['tipo de tarifa'].replace({1: 'R', 2: 'NR'})
-        ap['estrato'] = ap['estrato'].replace({11: 'AP'})
+        ap['estrato'] = ap['estrato'].replace({11: 'AP'}).astype(str)
         ap = ap[ap['estrato'] == 'AP']
 
         tarifas_val = Tarifas[Tarifas['ESTRATO'] == 'AP']
